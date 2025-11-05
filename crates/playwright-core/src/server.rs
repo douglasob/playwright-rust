@@ -26,7 +26,12 @@ use tokio::process::{Child, Command};
 /// ```
 #[derive(Debug)]
 pub struct PlaywrightServer {
-    process: Child,
+    /// The Playwright server child process
+    ///
+    /// This is public to allow integration tests to access stdin/stdout pipes.
+    /// In production code, you should use the Connection layer instead of
+    /// accessing the process directly.
+    pub process: Child,
 }
 
 impl PlaywrightServer {
@@ -53,6 +58,8 @@ impl PlaywrightServer {
             .arg(&cli_js)
             .arg("run-driver")
             .env("PW_LANG_NAME", "rust")
+            .env("PW_LANG_NAME_VERSION", env!("CARGO_PKG_RUST_VERSION"))
+            .env("PW_CLI_DISPLAY_VERSION", env!("CARGO_PKG_VERSION"))
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::inherit())

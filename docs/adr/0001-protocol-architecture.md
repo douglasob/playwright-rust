@@ -410,15 +410,36 @@ We chose **Option 2 (JSON-RPC to Playwright Server)** because it is the **only o
 
 Phase 1 implementation (see [phase1-protocol-foundation.md](../implementation-plans/phase1-protocol-foundation.md)):
 
-1. **Server Management** (`src/server.rs`)
-   - Download Playwright server on first run
+1. **Server Management** (`src/server.rs`) - ✅ Complete (2025-11-05)
+   - Build-time driver download via `build.rs`
    - Launch server process: `node cli.js run-driver`
-   - Set environment: `PW_LANG_NAME=rust`
+   - Set environment: `PW_LANG_NAME=rust`, `PW_LANG_NAME_VERSION`, `PW_CLI_DISPLAY_VERSION`
 
-2. **Transport Layer** (`src/transport.rs`)
+2. **Transport Layer** (`src/transport.rs`) - ✅ Complete (2025-11-05)
    - Stdio pipe communication
    - Length-prefixed message framing (4 bytes LE + JSON)
    - Async read/write with tokio
+   - Generic over `AsyncWrite + AsyncRead` for testability
+   - 8 unit tests + 3 integration tests (all passing)
+
+   **Transport Implementation Details (Research 2025-11-05):**
+
+   All three official bindings use identical message framing:
+   - **4-byte little-endian length prefix** + JSON payload
+   - Python: `len(data).to_bytes(4, byteorder="little")`
+   - Java: Custom bit shifting for little-endian encoding
+   - .NET: Byte masks for little-endian encoding
+
+   Async patterns vary by language:
+   - **Python**: Single async loop, `readexactly()`, direct callback
+   - **Java**: Separate reader/writer threads, blocking queues
+   - **.NET**: Async Tasks, event-based dispatch
+
+   **Rust approach**: Match Python's async pattern (closest to tokio):
+   - Use `tokio::io::AsyncReadExt::read_exact()` for length prefix
+   - Single async task for read loop
+   - `tokio::sync::mpsc` channel for message dispatch
+   - Match Python's 32KB chunk size for large messages
 
 3. **Connection Layer** (`src/connection.rs`)
    - JSON-RPC client with request/response correlation

@@ -6,6 +6,8 @@
 pub mod driver;
 pub mod error;
 pub mod server;
+pub mod transport;
 
 pub use error::{Error, Result};
 pub use server::PlaywrightServer;
+pub use transport::{PipeTransport, Transport};

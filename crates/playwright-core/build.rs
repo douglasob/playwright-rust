@@ -32,10 +32,7 @@ fn main() {
 
     // Check if driver already exists
     if driver_dir.exists() {
-        println!(
-            "cargo:warning=Playwright driver already exists at {}",
-            driver_dir.display()
-        );
+        // Driver already downloaded, silently use it
         set_output_env_vars(&driver_dir, platform);
         return;
     }
