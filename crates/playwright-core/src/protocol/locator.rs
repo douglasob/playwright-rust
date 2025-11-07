@@ -184,10 +184,37 @@ impl Locator {
         self.frame.locator_press(&self.selector, key).await
     }
 
-    // TODO: Implement input_value() method to read input/textarea values
-    // This is needed to properly test fill(), clear(), and press() actions
-    // Should be implemented in Phase 3 Slice 4 (Form Interactions)
-    // See: https://playwright.dev/docs/api/class-locator#locator-input-value
+    /// Ensures the checkbox or radio button is checked.
+    ///
+    /// This method is idempotent - if already checked, does nothing.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-check>
+    pub async fn check(&self, _options: Option<()>) -> Result<()> {
+        self.frame.locator_check(&self.selector).await
+    }
+
+    /// Ensures the checkbox is unchecked.
+    ///
+    /// This method is idempotent - if already unchecked, does nothing.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-uncheck>
+    pub async fn uncheck(&self, _options: Option<()>) -> Result<()> {
+        self.frame.locator_uncheck(&self.selector).await
+    }
+
+    /// Hovers the mouse over the element.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-hover>
+    pub async fn hover(&self, _options: Option<()>) -> Result<()> {
+        self.frame.locator_hover(&self.selector).await
+    }
+
+    /// Returns the value of the input, textarea, or select element.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-input-value>
+    pub async fn input_value(&self, _options: Option<()>) -> Result<String> {
+        self.frame.locator_input_value(&self.selector).await
+    }
 }
 
 impl std::fmt::Debug for Locator {

@@ -93,8 +93,12 @@ async fn test_fill_input() {
         .await
         .expect("Failed to fill input");
 
-    // Note: Verifying input value requires inputValue() method (not yet implemented)
-    // For now, we verify fill() succeeds without error
+    // Verify the input value
+    let value = input
+        .input_value(None)
+        .await
+        .expect("Failed to get input value");
+    assert_eq!(value, "John Doe");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -124,8 +128,12 @@ async fn test_fill_textarea() {
         .await
         .expect("Failed to fill textarea");
 
-    // Note: Verifying textarea value requires inputValue() or different approach
-    // For now, we verify fill() succeeds without error
+    // Verify the textarea value
+    let value = textarea
+        .input_value(None)
+        .await
+        .expect("Failed to get textarea value");
+    assert_eq!(value, "Hello\nWorld");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -148,12 +156,25 @@ async fn test_clear_input() {
         .await
         .expect("Failed to navigate");
 
-    // Test: Clear input field
+    // Test: Clear input field with initial value
     let input = page.locator("#input").await;
+
+    // Verify initial value
+    let initial_value = input
+        .input_value(None)
+        .await
+        .expect("Failed to get initial value");
+    assert_eq!(initial_value, "initial");
+
+    // Clear the input
     input.clear(None).await.expect("Failed to clear input");
 
-    // Note: Verifying clear requires inputValue() method
-    // For now, we verify clear() succeeds without error
+    // Verify input is now empty
+    let cleared_value = input
+        .input_value(None)
+        .await
+        .expect("Failed to get cleared value");
+    assert_eq!(cleared_value, "");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -176,7 +197,7 @@ async fn test_press_enter() {
         .await
         .expect("Failed to navigate");
 
-    // Test: Press Enter key
+    // Test: Press Enter key changes input value via JavaScript
     let input = page.locator("#input").await;
     input.click(None).await.expect("Failed to focus input");
     input
@@ -184,8 +205,12 @@ async fn test_press_enter() {
         .await
         .expect("Failed to press Enter");
 
-    // Note: Verifying keypress effects requires inputValue() method
-    // For now, we verify press() succeeds without error
+    // Verify keypress had effect (keyboard.html sets value to "submitted" on Enter)
+    let value = input
+        .input_value(None)
+        .await
+        .expect("Failed to get input value");
+    assert_eq!(value, "submitted");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -243,8 +268,12 @@ async fn test_fill_webkit() {
         .await
         .expect("Failed to fill input");
 
-    // Note: Verifying fill requires inputValue() method
-    // For now, we verify fill() succeeds without error
+    // Verify the input value
+    let value = input
+        .input_value(None)
+        .await
+        .expect("Failed to get input value");
+    assert_eq!(value, "Test");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();

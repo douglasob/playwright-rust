@@ -1,6 +1,6 @@
 # Phase 3: Page Interactions
 
-**Status:** In Progress - Slices 1-3 COMPLETE ✅
+**Status:** In Progress - Slices 1-4 COMPLETE ✅
 
 **Goal:** Implement core page interactions (navigation, locators, actions) matching playwright-python API.
 
@@ -409,48 +409,56 @@ Following Phase 2's successful vertical slicing approach, Phase 3 is divided int
 
 **Why Fourth:** Checkboxes are common form elements. Hover needed for dropdown interactions.
 
+**Status:** ✅ **COMPLETE**
+
+**Implementation Notes:**
+- Implemented 4 new methods: check(), uncheck(), hover(), input_value()
+- All methods delegate to Frame with strict=true
+- Options support deferred - all methods accept Option<()> for now
+- Added checkbox.html and hover.html to test_server with checkboxes, radio buttons, hover tooltips
+- Created checkbox_test.rs with comprehensive checkbox/hover tests
+- Updated actions_test.rs to use input_value() for proper fill/clear/press verification
+- All fill/clear/press tests now verify actual input values (no longer just method success)
+- Cross-browser testing: All tests pass on Chromium, Firefox, WebKit
+- check() and uncheck() are properly idempotent as per Playwright API
+
 **Tasks:**
-- [ ] Implement `locator.check(options)`
-  - Options: force, position, timeout, trial
-  - Protocol: "check" message
-  - Auto-waiting for checkbox/radio input
-  - Idempotent (no-op if already checked)
-- [ ] Implement `locator.uncheck(options)`
-  - Options: force, position, timeout, trial
-  - Protocol: "uncheck" message
-  - Only works on checkboxes (not radio buttons)
-  - Idempotent (no-op if already unchecked)
-- [ ] Implement `locator.set_checked(checked, options)`
-  - Convenience method that calls check() or uncheck()
-- [ ] Implement `locator.hover(options)`
-  - Options: force, modifiers, position, timeout, trial
-  - Protocol: "hover" message
-  - Auto-waiting for element to be stable
-  - Triggers :hover CSS states
-- [ ] Tests
-  - Test check on unchecked checkbox
-  - Test check is idempotent (already checked)
-  - Test uncheck on checked checkbox
-  - Test uncheck is idempotent (already unchecked)
-  - Test set_checked(true) and set_checked(false)
-  - Test check on radio button
-  - Test uncheck fails on radio button
-  - Test hover shows dropdown menu
-  - Test hover with position option
-  - Test timeout errors
-  - Cross-browser tests
+- [x] Implement `locator.check(options)` - Basic implementation with Option<()>
+- [x] Implement `locator.uncheck(options)` - Basic implementation with Option<()>
+- [x] Implement `locator.hover(options)` - Basic implementation with Option<()>
+- [x] Implement `locator.input_value(options)` - Returns input/textarea/select values
+- [x] Frame delegate methods - Added 4 methods to Frame (check, uncheck, hover, input_value)
+- [x] Test infrastructure - Added checkbox.html and hover.html to test_server
+- [x] Tests - Created checkbox_test.rs with comprehensive coverage + cross-browser tests
+- [x] Updated actions_test.rs - Fill/clear/press tests now verify actual values with input_value()
+- [x] Verified all existing tests still pass
+
+**Deferred to Future Slices:**
+- Options implementation (CheckOptions, HoverOptions with builder pattern)
+- set_checked() convenience method (calls check/uncheck based on boolean)
+- Test uncheck fails on radio button (currently Playwright server handles this)
+
+**Files Created:**
+- `crates/playwright-core/tests/checkbox_test.rs` - Checkbox and hover integration tests
 
 **Files Modified:**
-- `crates/playwright/src/api/locator.rs` - Add check, uncheck, set_checked, hover methods
-- `crates/playwright/src/api/options.rs` - Add CheckOptions, HoverOptions
-- `tests/actions_test.rs` - Add checkbox and hover tests
+- `crates/playwright-core/src/protocol/locator.rs` - Added 4 methods (check, uncheck, hover, input_value)
+- `crates/playwright-core/src/protocol/frame.rs` - Added 4 Frame delegate methods
+- `crates/playwright-core/tests/test_server.rs` - Added checkbox.html and hover.html pages
+- `crates/playwright-core/tests/actions_test.rs` - Updated fill/clear/press tests to verify values with input_value()
+- `crates/playwright/examples/actions.rs` - Updated to demonstrate hover() and list all available form actions
+- `README.md` - Added checkbox, hover, and input_value to quick example and "What works now" list
 
 **Acceptance Criteria:**
-- Check/uncheck successfully toggle checkboxes
-- Check works on radio buttons
-- Uncheck fails gracefully on radio buttons
-- Hover successfully triggers :hover states
-- All tests pass cross-browser
+- ✅ Check successfully checks unchecked checkboxes
+- ✅ Check is idempotent (no-op on already checked)
+- ✅ Uncheck successfully unchecks checked checkboxes
+- ✅ Uncheck is idempotent (no-op on already unchecked)
+- ✅ Check works on radio buttons
+- ✅ Hover successfully triggers :hover CSS states (tooltip visibility)
+- ✅ input_value() returns correct input/textarea values
+- ✅ Fill/clear/press tests now verify actual values (not just method success)
+- ✅ All tests pass cross-browser (Chromium, Firefox, WebKit)
 
 ### Slice 5: Select and File Upload
 

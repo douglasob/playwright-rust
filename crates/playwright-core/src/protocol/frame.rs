@@ -436,9 +436,61 @@ impl Frame {
             .await
     }
 
-    // TODO: Implement locator_input_value() delegate method
-    // This Frame delegate is needed to support Locator::input_value()
-    // Should send "inputValue" message to Frame with selector
+    pub(crate) async fn locator_check(&self, selector: &str) -> Result<()> {
+        self.channel()
+            .send_no_result(
+                "check",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true
+                }),
+            )
+            .await
+    }
+
+    pub(crate) async fn locator_uncheck(&self, selector: &str) -> Result<()> {
+        self.channel()
+            .send_no_result(
+                "uncheck",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true
+                }),
+            )
+            .await
+    }
+
+    pub(crate) async fn locator_hover(&self, selector: &str) -> Result<()> {
+        self.channel()
+            .send_no_result(
+                "hover",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true
+                }),
+            )
+            .await
+    }
+
+    pub(crate) async fn locator_input_value(&self, selector: &str) -> Result<String> {
+        #[derive(Deserialize)]
+        struct InputValueResponse {
+            value: String,
+        }
+
+        let response: InputValueResponse = self
+            .channel()
+            .send(
+                "inputValue",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true
+                }),
+            )
+            .await?;
+
+        Ok(response.value)
+    }
 }
 
 impl ChannelOwner for Frame {

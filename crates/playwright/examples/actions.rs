@@ -5,7 +5,9 @@
 // - Double-clicking elements
 // - Filling form inputs
 // - Pressing keys
-// - Basic element interactions
+// - Checkbox interactions
+// - Hover actions
+// - Reading input values
 //
 // Note: This is a smoke test showing the API.
 // Full interaction testing requires custom test pages.
@@ -37,8 +39,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     heading.dblclick(None).await?;
     println!("   • Double-click succeeded on heading");
 
-    // Note: fill(), clear(), and press() require input elements
-    // Full testing with forms will be added in future examples
+    // Hover action
+    println!("\\n👆 Testing hover action:");
+    heading.hover(None).await?;
+    println!("   • Hover succeeded on heading");
+
+    // Note: The following actions are available but require appropriate elements:
+    println!("\\n📋 Available form actions (require appropriate elements):");
+    println!("   • fill(text) - Fill input fields");
+    println!("   • clear() - Clear input fields");
+    println!("   • press(key) - Press keyboard keys");
+    println!("   • check() - Check checkboxes/radio buttons");
+    println!("   • uncheck() - Uncheck checkboxes");
+    println!("   • input_value() - Read input values");
+    println!("\\n   See integration tests for full examples with forms!");
 
     // Cleanup
     println!("\\n🧹 Cleaning up...");

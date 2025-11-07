@@ -76,6 +76,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     heading.click(None).await?;
     heading.dblclick(None).await?;
 
+    // Form interactions
+    let checkbox = page.locator("input[type=checkbox]").await;
+    checkbox.check(None).await?;
+    let is_checked = checkbox.is_checked().await?;
+    println!("Checkbox checked: {}", is_checked);
+
+    // Hover interactions
+    let button = page.locator("button").await;
+    button.hover(None).await?;
+
     // Cleanup
     page.close().await?;
     browser.close().await?;
@@ -99,6 +109,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - ✅ State queries (`is_visible()`, `is_enabled()`, `is_checked()`, etc.)
 - ✅ Locator chaining (`first()`, `last()`, `nth()`, nested locators)
 - ✅ Element actions (`click()`, `dblclick()`, `fill()`, `clear()`, `press()`)
+- ✅ Checkbox actions (`check()`, `uncheck()`)
+- ✅ Mouse interactions (`hover()`)
+- ✅ Input value reading (`input_value()`)
 - ✅ Proper lifecycle management and cleanup
 
 **Coming next:** Screenshots, waiting methods, assertions

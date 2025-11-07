@@ -28,7 +28,9 @@ impl TestServer {
             .route("/input.html", get(input_page))
             .route("/dblclick.html", get(dblclick_page))
             .route("/keyboard.html", get(keyboard_page))
-            .route("/locator.html", get(locator_page));
+            .route("/locator.html", get(locator_page))
+            .route("/checkbox.html", get(checkbox_page))
+            .route("/hover.html", get(hover_page));
 
         // Bind to port 0 to get any available port
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
@@ -180,6 +182,66 @@ async fn locator_page() -> Response<Body> {
     <span id="nested">Nested element</span>
   </div>
   <div id="hidden" style="display: none;">Hidden element</div>
+</body>
+</html>"#,
+        ))
+        .unwrap()
+}
+
+async fn checkbox_page() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "text/html")
+        .body(Body::from(
+            r#"<!DOCTYPE html>
+<html>
+<head><title>Checkbox Test</title></head>
+<body>
+  <input type="checkbox" id="checkbox" />
+  <label for="checkbox">Unchecked checkbox</label>
+  <br />
+  <input type="checkbox" id="checked-checkbox" checked />
+  <label for="checked-checkbox">Checked checkbox</label>
+  <br />
+  <input type="radio" id="radio1" name="radio-group" />
+  <label for="radio1">Radio 1</label>
+  <br />
+  <input type="radio" id="radio2" name="radio-group" />
+  <label for="radio2">Radio 2</label>
+</body>
+</html>"#,
+        ))
+        .unwrap()
+}
+
+async fn hover_page() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "text/html")
+        .body(Body::from(
+            r#"<!DOCTYPE html>
+<html>
+<head>
+  <title>Hover Test</title>
+  <style>
+    #hover-button {
+      padding: 10px;
+      background-color: #ccc;
+    }
+    #tooltip {
+      display: none;
+      margin-top: 10px;
+      padding: 5px;
+      background-color: yellow;
+    }
+    #hover-button:hover + #tooltip {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <button id="hover-button">Hover over me</button>
+  <div id="tooltip">This is a tooltip</div>
 </body>
 </html>"#,
         ))
