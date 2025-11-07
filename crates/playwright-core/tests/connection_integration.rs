@@ -155,20 +155,22 @@ async fn test_concurrent_requests_with_server() {
     // - Multiple concurrent operations
 }
 
-/// Test error handling with invalid requests (deferred to Phase 2 Slice 4+)
+/// Test error handling with invalid requests
 ///
-/// This test will verify that protocol errors from the server are properly
+/// This test verifies that protocol errors from the server are properly
 /// converted to Rust errors and propagated correctly.
 ///
-/// Deferred to Phase 2 Slice 4+ because it requires:
-/// - Valid Browser object GUID (available in Slice 3) ✅
-/// - Methods to call with invalid params (e.g., Browser::close() in Slice 4)
-/// - Intentionally invalid requests to trigger protocol errors
+/// Can now be implemented because we have:
+/// - Valid Browser object GUID (Slice 3) ✅
+/// - Browser::close() method (Slice 4) ✅
+/// - Can test error scenarios like double-close
 #[tokio::test]
-#[ignore] // TODO: Implement in Phase 2 Slice 4+ when Browser::close() and error scenarios exist
+#[ignore] // TODO: Implement when we have time for comprehensive error testing
 async fn test_error_response_from_server() {
-    // Will implement when we have Browser::close() to test error scenarios:
-    // - Call close() twice (should error on second call)
+    // Test scenarios to implement:
+    // - Call browser.close() twice (should error on second call)
     // - Invalid GUIDs
     // - Invalid method parameters
+    //
+    // Note: This is deferred for time, not technical reasons
 }

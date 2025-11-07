@@ -29,8 +29,8 @@ use std::sync::Arc;
 ///
 ///     println!("Browser: {} version {}", browser.name(), browser.version());
 ///
-///     // Close browser (TODO: Slice 4)
-///     // browser.close().await?;
+///     // Close browser
+///     browser.close().await?;
 ///
 ///     Ok(())
 /// }
@@ -137,10 +137,45 @@ impl Browser {
     /// Returns the channel for sending protocol messages
     ///
     /// Used internally for sending RPC calls to the browser.
-    /// TODO: Make public in Slice 4 when Browser::close() is implemented
-    #[allow(dead_code)]
-    pub(crate) fn channel(&self) -> &Channel {
+    fn channel(&self) -> &Channel {
         self.base.channel()
+    }
+
+    /// Closes the browser and all of its pages (if any were opened).
+    ///
+    /// This is a graceful operation that sends a close command to the browser
+    /// and waits for it to shut down properly.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    ///
+    /// // Do work with browser...
+    ///
+    /// // Close browser when done
+    /// browser.close().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Browser has already been closed
+    /// - Communication with browser process fails
+    ///
+    /// See: <https://playwright.dev/docs/api/class-browser#browser-close>
+    pub async fn close(&self) -> Result<()> {
+        // Send close RPC to server
+        // The protocol expects an empty object as params
+        self.channel()
+            .send_no_result("close", serde_json::json!({}))
+            .await
     }
 }
 

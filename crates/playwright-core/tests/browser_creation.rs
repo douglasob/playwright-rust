@@ -46,10 +46,10 @@ async fn test_browser_object_creation_via_launch() {
         browser.version()
     );
 
-    // Cleanup (TODO: Slice 4 - Browser::close())
-    // browser.close().await.expect("Failed to close browser");
+    // Cleanup
+    browser.close().await.expect("Failed to close browser");
 
-    println!("✅ Slice 3 complete: Browser can be launched and created");
+    println!("✅ Slice 4 complete: Browser can be launched, used, and closed");
 }
 
 /// Test that Browser object has correct structure

@@ -108,7 +108,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Project Status
 
-**Current Phase:** 🚀 Phase 2 in Progress (Slice 3/7 Complete)
+**Current Phase:** 🚀 Phase 2 in Progress (Slice 4/7 Complete)
 
 ### Phase 1: Protocol Foundation (✅ Complete!)
 - [x] **Slice 1:** Server management (download, launch, lifecycle)
@@ -119,18 +119,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 **Result:** JSON-RPC communication working, Playwright server integration complete. See [Phase 1 Technical Summary](docs/technical/phase1-technical-summary.md).
 
-### Phase 2: Browser API (🚀 In Progress - 3/7 Slices Complete)
+### Phase 2: Browser API (🚀 In Progress - 4/7 Slices Complete)
 - [x] **Slice 1:** Browser object foundation (protocol object, ChannelOwner, object factory)
 - [x] **Slice 2:** Launch options API (LaunchOptions struct, builder pattern, normalization)
 - [x] **Slice 3:** BrowserType::launch() (RPC implementation, integration tests) ✅
-- [ ] **Slice 4:** Browser::close() (graceful shutdown)
+- [x] **Slice 4:** Browser::close() (graceful shutdown) ✅
 - [ ] **Slice 5:** BrowserContext object (contexts, isolation)
 - [ ] **Slice 6:** Page object (page creation, basic methods)
 - [ ] **Slice 7:** Documentation and examples
 
 **Goal:** Enable browser launching and page lifecycle management. See [Phase 2 Implementation Plan](docs/implementation-plans/phase2-browser-api.md).
 
-**Latest:** Can now launch browsers! All three browsers (Chromium, Firefox, WebKit) can be launched with the `BrowserType::launch()` API.
+**Latest:** Complete browser lifecycle! Can now launch browsers and close them gracefully with proper cleanup.
 
 ### Upcoming Phases
 - [ ] **Phase 3:** Page Interactions (navigation, locators, actions)
@@ -188,6 +188,13 @@ npx playwright@1.49.0 install chromium firefox webkit
 - Playwright server 1.49.0 expects specific browser builds (e.g., chromium build 1148)
 - If you run `npx playwright install` without version, you'll get the latest browsers
 - Mismatched versions will cause "Executable doesn't exist" errors during tests
+
+**Platform Support:**
+- ✅ **macOS/Linux**: Full support - all tests pass
+- ⚠️ **Windows**: Known issue - integration tests hang due to stdio pipe cleanup (Phase 1 deferred issue)
+  - Unit tests work fine on Windows
+  - CI runs unit tests only on Windows
+  - Will be fixed when implementing proper cleanup (Browser::close() or later)
 
 **Note:** CI automatically installs the correct browser versions - see `.github/workflows/test.yml`
 

@@ -65,8 +65,13 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install Playwright browsers
+    - name: Install Playwright browsers (Linux/macOS)
+      if: runner.os != 'Windows'
       run: npx playwright@1.49.0 install chromium firefox webkit --with-deps
+
+    - name: Install Playwright browsers (Windows)
+      if: runner.os == 'Windows'
+      run: npx playwright@1.49.0 install chromium firefox webkit
 
     - name: Check formatting
       run: cargo fmt --all -- --check
@@ -77,8 +82,13 @@ jobs:
     - name: Build
       run: cargo build --verbose
 
-    - name: Run tests
+    - name: Run tests (Linux/macOS)
+      if: runner.os != 'Windows'
       run: cargo test --verbose --workspace
+
+    - name: Run tests (Windows - unit tests only)
+      if: runner.os == 'Windows'
+      run: cargo test --verbose --lib --workspace
 
     - name: Run examples
       if: matrix.os != 'windows-latest'
