@@ -343,26 +343,46 @@ impl Page {
             .await
     }
 
-    pub(crate) async fn keyboard_press(&self, key: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "keyboardPress",
-                serde_json::json!({
-                    "key": key
-                }),
-            )
-            .await
+    pub(crate) async fn keyboard_press(
+        &self,
+        key: &str,
+        options: Option<crate::protocol::KeyboardOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "key": key
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("keyboardPress", params).await
     }
 
-    pub(crate) async fn keyboard_type(&self, text: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "keyboardType",
-                serde_json::json!({
-                    "text": text
-                }),
-            )
-            .await
+    pub(crate) async fn keyboard_type(
+        &self,
+        text: &str,
+        options: Option<crate::protocol::KeyboardOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "text": text
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("keyboardType", params).await
     }
 
     pub(crate) async fn keyboard_insert_text(&self, text: &str) -> Result<()> {
@@ -378,53 +398,110 @@ impl Page {
 
     // Internal mouse methods (called by Mouse struct)
 
-    pub(crate) async fn mouse_move(&self, x: i32, y: i32) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "mouseMove",
-                serde_json::json!({
-                    "x": x,
-                    "y": y
-                }),
-            )
-            .await
+    pub(crate) async fn mouse_move(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "x": x,
+            "y": y
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("mouseMove", params).await
     }
 
-    pub(crate) async fn mouse_click(&self, x: i32, y: i32) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "mouseClick",
-                serde_json::json!({
-                    "x": x,
-                    "y": y
-                }),
-            )
-            .await
+    pub(crate) async fn mouse_click(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "x": x,
+            "y": y
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("mouseClick", params).await
     }
 
-    pub(crate) async fn mouse_dblclick(&self, x: i32, y: i32) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "mouseClick",
-                serde_json::json!({
-                    "x": x,
-                    "y": y,
-                    "clickCount": 2
-                }),
-            )
-            .await
+    pub(crate) async fn mouse_dblclick(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "x": x,
+            "y": y,
+            "clickCount": 2
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("mouseClick", params).await
     }
 
-    pub(crate) async fn mouse_down(&self) -> Result<()> {
-        self.channel()
-            .send_no_result("mouseDown", serde_json::json!({}))
-            .await
+    pub(crate) async fn mouse_down(
+        &self,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({});
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("mouseDown", params).await
     }
 
-    pub(crate) async fn mouse_up(&self) -> Result<()> {
-        self.channel()
-            .send_no_result("mouseUp", serde_json::json!({}))
-            .await
+    pub(crate) async fn mouse_up(
+        &self,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({});
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("mouseUp", params).await
     }
 
     pub(crate) async fn mouse_wheel(&self, delta_x: i32, delta_y: i32) -> Result<()> {

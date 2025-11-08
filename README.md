@@ -95,19 +95,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build();
     heading.click(Some(options)).await?;
 
-    // Form interactions
+    // Form interactions with options
+    use playwright_core::protocol::{FillOptions, PressOptions, CheckOptions, HoverOptions};
+
+    let input = page.locator("input[type=text]").await;
+    let fill_opts = FillOptions::builder().force(true).timeout(5000.0).build();
+    input.fill("Hello", Some(fill_opts)).await?;
+
+    let press_opts = PressOptions::builder().delay(100.0).build();
+    input.press("Enter", Some(press_opts)).await?;
+
     let checkbox = page.locator("input[type=checkbox]").await;
-    checkbox.check(None).await?;
+    let check_opts = CheckOptions::builder().force(true).trial(false).build();
+    checkbox.check(Some(check_opts)).await?;
     let is_checked = checkbox.is_checked().await?;
     println!("Checkbox checked: {}", is_checked);
 
-    // Hover interactions
+    // Hover interactions with options
     let button = page.locator("button").await;
-    button.hover(None).await?;
+    let hover_opts = HoverOptions::builder()
+        .position(Position { x: 5.0, y: 5.0 })
+        .build();
+    button.hover(Some(hover_opts)).await?;
 
     // Select dropdown options
+    use playwright_core::protocol::SelectOptions;
     let select = page.locator("select#colors").await;
-    select.select_option("blue", None).await?;
+    let select_opts = SelectOptions::builder().force(true).build();
+    select.select_option("blue", Some(select_opts)).await?;
 
     // Multiple select
     select.select_option_multiple(&["red", "green"], None).await?;
@@ -117,15 +132,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_path = std::path::PathBuf::from("./test.txt");
     file_input.set_input_files(&file_path, None).await?;
 
-    // Low-level keyboard control
+    // Low-level keyboard control with options
+    use playwright_core::protocol::KeyboardOptions;
     let keyboard = page.keyboard();
-    keyboard.type_text("Hello World", None).await?;
+    let kb_opts = KeyboardOptions::builder().delay(50.0).build();
+    keyboard.type_text("Hello World", Some(kb_opts)).await?;
     keyboard.press("Enter", None).await?;
 
-    // Low-level mouse control
+    // Low-level mouse control with options
+    use playwright_core::protocol::MouseOptions;
     let mouse = page.mouse();
     mouse.move_to(100, 200, None).await?;
-    mouse.click(100, 200, None).await?;
+    let mouse_opts = MouseOptions::builder()
+        .button(MouseButton::Left)
+        .click_count(1)
+        .build();
+    mouse.click(100, 200, Some(mouse_opts)).await?;
 
     // Take screenshots
     let screenshot_bytes = page.screenshot(None).await?;
@@ -166,19 +188,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - ✅ Locator chaining (`first()`, `last()`, `nth()`, nested locators)
 - ✅ Element actions (`click()`, `dblclick()`, `fill()`, `clear()`, `press()`)
 - ✅ Click options (button, modifiers, position, force, trial, timeout, delay)
+- ✅ Fill options (force, timeout)
+- ✅ Press options (delay, timeout)
 - ✅ Checkbox actions (`check()`, `uncheck()`)
+- ✅ Check options (force, position, timeout, trial)
 - ✅ Mouse interactions (`hover()`)
+- ✅ Hover options (force, modifiers, position, timeout, trial)
 - ✅ Input value reading (`input_value()`)
 - ✅ Select interactions (`select_option()`, multiple selections)
+- ✅ Select options (force, timeout)
 - ✅ File uploads (`set_input_files()`, multiple files)
 - ✅ Low-level keyboard control (`keyboard.down()`, `up()`, `press()`, `type_text()`, `insert_text()`)
+- ✅ Keyboard options (delay for press and type)
 - ✅ Low-level mouse control (`mouse.move_to()`, `click()`, `dblclick()`, `down()`, `up()`, `wheel()`)
+- ✅ Mouse options (button, click_count, delay, steps)
 - ✅ Screenshots (`page.screenshot()`, `locator.screenshot()`, save to file)
 - ✅ Screenshot options (JPEG format, quality, full-page, clip region, omit background)
 - ✅ Element queries (`page.query_selector()`, `query_selector_all()`)
 - ✅ Proper lifecycle management and cleanup
 
-**Coming next:** More action options (fill, press, check, hover, select), assertions, network interception
+**Coming next:** SelectOption variants (label, index selection), assertions, network interception
 
 ## Installation
 

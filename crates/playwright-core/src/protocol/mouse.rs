@@ -24,36 +24,51 @@ impl Mouse {
     /// Dispatches a `mousemove` event.
     ///
     /// See: <https://playwright.dev/docs/api/class-mouse#mouse-move>
-    pub async fn move_to(&self, x: i32, y: i32, _options: Option<()>) -> Result<()> {
-        self.page.mouse_move(x, y).await
+    pub async fn move_to(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        self.page.mouse_move(x, y, options).await
     }
 
     /// Combines `move()`, `down()`, and `up()` actions.
     ///
     /// See: <https://playwright.dev/docs/api/class-mouse#mouse-click>
-    pub async fn click(&self, x: i32, y: i32, _options: Option<()>) -> Result<()> {
-        self.page.mouse_click(x, y).await
+    pub async fn click(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        self.page.mouse_click(x, y, options).await
     }
 
     /// Shortcut performing `move()`, `down()`, `up()`, `down()`, and `up()` sequentially.
     ///
     /// See: <https://playwright.dev/docs/api/class-mouse#mouse-dblclick>
-    pub async fn dblclick(&self, x: i32, y: i32, _options: Option<()>) -> Result<()> {
-        self.page.mouse_dblclick(x, y).await
+    pub async fn dblclick(
+        &self,
+        x: i32,
+        y: i32,
+        options: Option<crate::protocol::MouseOptions>,
+    ) -> Result<()> {
+        self.page.mouse_dblclick(x, y, options).await
     }
 
     /// Dispatches a `mousedown` event.
     ///
     /// See: <https://playwright.dev/docs/api/class-mouse#mouse-down>
-    pub async fn down(&self, _options: Option<()>) -> Result<()> {
-        self.page.mouse_down().await
+    pub async fn down(&self, options: Option<crate::protocol::MouseOptions>) -> Result<()> {
+        self.page.mouse_down(options).await
     }
 
     /// Dispatches a `mouseup` event.
     ///
     /// See: <https://playwright.dev/docs/api/class-mouse#mouse-up>
-    pub async fn up(&self, _options: Option<()>) -> Result<()> {
-        self.page.mouse_up().await
+    pub async fn up(&self, options: Option<crate::protocol::MouseOptions>) -> Result<()> {
+        self.page.mouse_up(options).await
     }
 
     /// Dispatches a `wheel` event for manual page scrolling.

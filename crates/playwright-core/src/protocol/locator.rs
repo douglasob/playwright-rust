@@ -166,22 +166,30 @@ impl Locator {
     /// Fills the element with text.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-fill>
-    pub async fn fill(&self, text: &str, _options: Option<()>) -> Result<()> {
-        self.frame.locator_fill(&self.selector, text).await
+    pub async fn fill(
+        &self,
+        text: &str,
+        options: Option<crate::protocol::FillOptions>,
+    ) -> Result<()> {
+        self.frame.locator_fill(&self.selector, text, options).await
     }
 
     /// Clears the element's value.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-clear>
-    pub async fn clear(&self, _options: Option<()>) -> Result<()> {
-        self.frame.locator_clear(&self.selector).await
+    pub async fn clear(&self, options: Option<crate::protocol::FillOptions>) -> Result<()> {
+        self.frame.locator_clear(&self.selector, options).await
     }
 
     /// Presses a key on the element.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-press>
-    pub async fn press(&self, key: &str, _options: Option<()>) -> Result<()> {
-        self.frame.locator_press(&self.selector, key).await
+    pub async fn press(
+        &self,
+        key: &str,
+        options: Option<crate::protocol::PressOptions>,
+    ) -> Result<()> {
+        self.frame.locator_press(&self.selector, key, options).await
     }
 
     /// Ensures the checkbox or radio button is checked.
@@ -189,8 +197,8 @@ impl Locator {
     /// This method is idempotent - if already checked, does nothing.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-check>
-    pub async fn check(&self, _options: Option<()>) -> Result<()> {
-        self.frame.locator_check(&self.selector).await
+    pub async fn check(&self, options: Option<crate::protocol::CheckOptions>) -> Result<()> {
+        self.frame.locator_check(&self.selector, options).await
     }
 
     /// Ensures the checkbox is unchecked.
@@ -198,15 +206,15 @@ impl Locator {
     /// This method is idempotent - if already unchecked, does nothing.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-uncheck>
-    pub async fn uncheck(&self, _options: Option<()>) -> Result<()> {
-        self.frame.locator_uncheck(&self.selector).await
+    pub async fn uncheck(&self, options: Option<crate::protocol::CheckOptions>) -> Result<()> {
+        self.frame.locator_uncheck(&self.selector, options).await
     }
 
     /// Hovers the mouse over the element.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-hover>
-    pub async fn hover(&self, _options: Option<()>) -> Result<()> {
-        self.frame.locator_hover(&self.selector).await
+    pub async fn hover(&self, options: Option<crate::protocol::HoverOptions>) -> Result<()> {
+        self.frame.locator_hover(&self.selector, options).await
     }
 
     /// Returns the value of the input, textarea, or select element.
@@ -221,9 +229,13 @@ impl Locator {
     /// Returns an array of option values that have been successfully selected.
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-select-option>
-    pub async fn select_option(&self, value: &str, _options: Option<()>) -> Result<Vec<String>> {
+    pub async fn select_option(
+        &self,
+        value: &str,
+        options: Option<crate::protocol::SelectOptions>,
+    ) -> Result<Vec<String>> {
         self.frame
-            .locator_select_option(&self.selector, value)
+            .locator_select_option(&self.selector, value, options)
             .await
     }
 
@@ -235,10 +247,10 @@ impl Locator {
     pub async fn select_option_multiple(
         &self,
         values: &[&str],
-        _options: Option<()>,
+        options: Option<crate::protocol::SelectOptions>,
     ) -> Result<Vec<String>> {
         self.frame
-            .locator_select_option_multiple(&self.selector, values)
+            .locator_select_option_multiple(&self.selector, values, options)
             .await
     }
 

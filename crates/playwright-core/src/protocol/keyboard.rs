@@ -36,15 +36,23 @@ impl Keyboard {
     /// Executes a complete key press (down + up sequence).
     ///
     /// See: <https://playwright.dev/docs/api/class-keyboard#keyboard-press>
-    pub async fn press(&self, key: &str, _options: Option<()>) -> Result<()> {
-        self.page.keyboard_press(key).await
+    pub async fn press(
+        &self,
+        key: &str,
+        options: Option<crate::protocol::KeyboardOptions>,
+    ) -> Result<()> {
+        self.page.keyboard_press(key, options).await
     }
 
     /// Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character.
     ///
     /// See: <https://playwright.dev/docs/api/class-keyboard#keyboard-type>
-    pub async fn type_text(&self, text: &str, _options: Option<()>) -> Result<()> {
-        self.page.keyboard_type(text).await
+    pub async fn type_text(
+        &self,
+        text: &str,
+        options: Option<crate::protocol::KeyboardOptions>,
+    ) -> Result<()> {
+        self.page.keyboard_type(text, options).await
     }
 
     /// Dispatches only `input` event, does not emit `keydown`, `keyup` or `keypress` events.

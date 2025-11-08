@@ -11,6 +11,7 @@
 // - Objects are created by the object factory when server sends __create__ messages
 // - Objects communicate with the server via their Channel
 
+pub mod action_options;
 pub mod browser;
 pub mod browser_context;
 pub mod browser_type;
@@ -27,6 +28,10 @@ pub mod response;
 pub mod root;
 pub mod screenshot;
 
+pub use action_options::{
+    CheckOptions, FillOptions, HoverOptions, KeyboardOptions, MouseOptions, PressOptions,
+    SelectOptions,
+};
 pub use browser::Browser;
 pub use browser_context::BrowserContext;
 pub use browser_type::BrowserType;

@@ -244,7 +244,7 @@ Phase 4 will be considered complete when:
 
 ## Implementation Plan
 
-**Status:** In Progress - Slices 1-4 Complete ✅, Ready for Slice 5
+**Status:** In Progress - Slices 1-5 Complete ✅, Ready for Slice 6
 
 Phase 4 follows the same TDD and vertical slicing approach as Phase 3.
 
@@ -431,20 +431,47 @@ Phase 4 follows the same TDD and vertical slicing approach as Phase 3.
 
 ---
 
-### Slice 5: Other Action Options
+### Slice 5: Other Action Options ✅
+
+**Status:** Complete (2025-11-08)
 
 **Goal:** Implement remaining action options (Fill, Press, Check, Hover, Select, Keyboard, Mouse).
 
 **Why Fifth:** Complete the options pattern for all deferred actions.
 
 **Tasks:**
-- [ ] FillOptions, PressOptions
-- [ ] CheckOptions, HoverOptions
-- [ ] SelectOptions (for select_option)
-- [ ] KeyboardOptions (delay)
-- [ ] MouseOptions (button, steps, delay)
-- [ ] Update all action method signatures
-- [ ] Comprehensive option tests
+- [x] FillOptions, PressOptions
+- [x] CheckOptions, HoverOptions
+- [x] SelectOptions (for select_option)
+- [x] KeyboardOptions (delay)
+- [x] MouseOptions (button, steps, delay)
+- [x] Update all action method signatures
+- [x] Comprehensive option tests
+
+**Files Created:**
+- `crates/playwright-core/src/protocol/action_options.rs`
+- `crates/playwright-core/tests/action_options_test.rs`
+
+**Files Modified:**
+- `crates/playwright-core/src/protocol/mod.rs` (exported action option types)
+- `crates/playwright-core/src/protocol/locator.rs` (updated fill, clear, press, check, uncheck, hover, select_option methods)
+- `crates/playwright-core/src/protocol/frame.rs` (updated internal methods to accept options)
+- `crates/playwright-core/src/protocol/keyboard.rs` (updated press, type_text methods)
+- `crates/playwright-core/src/protocol/mouse.rs` (updated move_to, click, dblclick, down, up methods)
+- `crates/playwright-core/src/protocol/page.rs` (updated internal keyboard and mouse methods)
+
+**Acceptance Criteria:** ✅ All Met
+- ✅ FillOptions with force and timeout
+- ✅ PressOptions with delay and timeout
+- ✅ CheckOptions with force, position, timeout, trial
+- ✅ HoverOptions with force, modifiers, position, timeout, trial
+- ✅ SelectOptions with force and timeout
+- ✅ KeyboardOptions with delay
+- ✅ MouseOptions with button, click_count, delay, steps
+- ✅ All action methods accept options
+- ✅ Unit tests for all options structs
+- ✅ Integration tests for all options
+- ✅ Cross-browser compatibility verified (Chromium, Firefox, WebKit)
 
 ---
 

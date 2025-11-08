@@ -560,81 +560,143 @@ impl Frame {
     }
 
     /// Fills the element with text.
-    pub(crate) async fn locator_fill(&self, selector: &str, text: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "fill",
-                serde_json::json!({
-                    "selector": selector,
-                    "value": text,
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_fill(
+        &self,
+        selector: &str,
+        text: &str,
+        options: Option<crate::protocol::FillOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "value": text,
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("fill", params).await
     }
 
     /// Clears the element's value.
-    pub(crate) async fn locator_clear(&self, selector: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "fill",
-                serde_json::json!({
-                    "selector": selector,
-                    "value": "",
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_clear(
+        &self,
+        selector: &str,
+        options: Option<crate::protocol::FillOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "value": "",
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("fill", params).await
     }
 
     /// Presses a key on the element.
-    pub(crate) async fn locator_press(&self, selector: &str, key: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "press",
-                serde_json::json!({
-                    "selector": selector,
-                    "key": key,
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_press(
+        &self,
+        selector: &str,
+        key: &str,
+        options: Option<crate::protocol::PressOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "key": key,
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("press", params).await
     }
 
-    pub(crate) async fn locator_check(&self, selector: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "check",
-                serde_json::json!({
-                    "selector": selector,
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_check(
+        &self,
+        selector: &str,
+        options: Option<crate::protocol::CheckOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("check", params).await
     }
 
-    pub(crate) async fn locator_uncheck(&self, selector: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "uncheck",
-                serde_json::json!({
-                    "selector": selector,
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_uncheck(
+        &self,
+        selector: &str,
+        options: Option<crate::protocol::CheckOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("uncheck", params).await
     }
 
-    pub(crate) async fn locator_hover(&self, selector: &str) -> Result<()> {
-        self.channel()
-            .send_no_result(
-                "hover",
-                serde_json::json!({
-                    "selector": selector,
-                    "strict": true
-                }),
-            )
-            .await
+    pub(crate) async fn locator_hover(
+        &self,
+        selector: &str,
+        options: Option<crate::protocol::HoverOptions>,
+    ) -> Result<()> {
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "strict": true
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        self.channel().send_no_result("hover", params).await
     }
 
     pub(crate) async fn locator_input_value(&self, selector: &str) -> Result<String> {
@@ -661,23 +723,29 @@ impl Frame {
         &self,
         selector: &str,
         value: &str,
+        options: Option<crate::protocol::SelectOptions>,
     ) -> Result<Vec<String>> {
         #[derive(Deserialize)]
         struct SelectOptionResponse {
             values: Vec<String>,
         }
 
-        let response: SelectOptionResponse = self
-            .channel()
-            .send(
-                "selectOption",
-                serde_json::json!({
-                    "selector": selector,
-                    "strict": true,
-                    "options": [{"value": value}]
-                }),
-            )
-            .await?;
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "strict": true,
+            "options": [{"value": value}]
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        let response: SelectOptionResponse = self.channel().send("selectOption", params).await?;
 
         Ok(response.values)
     }
@@ -686,6 +754,7 @@ impl Frame {
         &self,
         selector: &str,
         values: &[&str],
+        options: Option<crate::protocol::SelectOptions>,
     ) -> Result<Vec<String>> {
         #[derive(Deserialize)]
         struct SelectOptionResponse {
@@ -697,17 +766,22 @@ impl Frame {
             .map(|v| serde_json::json!({"value": v}))
             .collect();
 
-        let response: SelectOptionResponse = self
-            .channel()
-            .send(
-                "selectOption",
-                serde_json::json!({
-                    "selector": selector,
-                    "strict": true,
-                    "options": values_array
-                }),
-            )
-            .await?;
+        let mut params = serde_json::json!({
+            "selector": selector,
+            "strict": true,
+            "options": values_array
+        });
+
+        if let Some(opts) = options {
+            let opts_json = opts.to_json();
+            if let Some(obj) = params.as_object_mut() {
+                if let Some(opts_obj) = opts_json.as_object() {
+                    obj.extend(opts_obj.clone());
+                }
+            }
+        }
+
+        let response: SelectOptionResponse = self.channel().send("selectOption", params).await?;
 
         Ok(response.values)
     }
