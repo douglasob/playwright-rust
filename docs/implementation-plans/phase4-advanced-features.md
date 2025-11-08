@@ -229,8 +229,8 @@ The following items were deferred from Phase 3 Slices and need to be implemented
 
 Phase 4 will be considered complete when:
 
-- [ ] ElementHandle protocol implemented
-- [ ] locator.screenshot() works with ElementHandles
+- [x] ElementHandle protocol implemented ✅ (Slice 1)
+- [x] locator.screenshot() works with ElementHandles ✅ (Slice 1)
 - [ ] Screenshot options fully implemented (type, quality, full_page, clip, etc.)
 - [ ] Navigation timeout error handling tested
 - [ ] ClickOptions with builder pattern implemented
@@ -244,18 +244,178 @@ Phase 4 will be considered complete when:
 
 ## Implementation Plan
 
-**Status:** Planning - Detailed slice breakdown TBD
+**Status:** In Progress - Slice 1 Complete ✅, Ready for Slice 2
 
-Phase 4 will follow the same TDD and vertical slicing approach as Phase 3. Slices will be determined when Phase 4 implementation begins.
+Phase 4 follows the same TDD and vertical slicing approach as Phase 3.
 
-**Suggested Slice Order:**
-1. ElementHandle protocol + locator.screenshot()
-2. Screenshot options (type, quality, full_page, clip)
-3. Navigation error handling
-4. ClickOptions with builder pattern
-5. Other action options (Fill, Press, Check, Hover)
-6. SelectOption variants
-7. Keyboard/Mouse options and enhancements
+### Slice 1: ElementHandle Protocol & Element Screenshots ✅
+
+**Status:** Complete (2025-11-08)
+
+**Goal:** Implement ElementHandle as a ChannelOwner protocol object and enable element-level screenshots via locator.screenshot().
+
+**Why First:** ElementHandles are required for locator.screenshot() (deferred from Phase 3). This is the highest-priority deferred item.
+
+**Research Complete:** ✅
+- ElementHandles are ChannelOwner protocol objects created via `__create__` messages
+- Element screenshots use `ElementHandle.screenshot` channel method (NOT `Frame.screenshot`)
+- Frame already returns ElementHandle GUIDs from `querySelectorAll` but we currently only use the count
+- Pattern matches Request/Response object implementation
+
+**Tasks:**
+- [x] Create `element_handle.rs` protocol module
+  - ElementHandle struct with ChannelOwnerImpl base
+  - Implement ChannelOwner trait
+  - Constructor: `new(parent, type_name, guid, initializer)`
+  - Method: `screenshot(options) -> Result<Vec<u8>>`
+  - Base64 decoding for screenshot data
+- [x] Update `frame.rs` with query methods
+  - `query_selector(selector) -> Result<Option<Arc<ElementHandle>>>`
+  - `query_selector_all(selector) -> Result<Vec<Arc<ElementHandle>>>`
+  - Helper to convert GUID responses to ElementHandle objects
+- [x] Update `page.rs` with query delegates
+  - `query_selector()` - delegates to main_frame
+  - `query_selector_all()` - delegates to main_frame
+- [x] Update `locator.rs`
+  - Uncomment and implement `screenshot()` method
+  - Use query_selector to get ElementHandle, call screenshot()
+- [x] Update `object_factory.rs`
+  - Add "ElementHandle" case in match statement
+  - Call ElementHandle::new() with proper parent
+- [x] Update `mod.rs`
+  - Export ElementHandle module
+- [x] Tests
+  - Test query_selector returns ElementHandle
+  - Test query_selector returns None when not found
+  - Test query_selector_all returns multiple handles
+  - Test ElementHandle.screenshot() directly
+  - Test locator.screenshot() delegates to ElementHandle
+  - test_locator_screenshot in screenshot_test.rs working
+  - Cross-browser tests (Chromium, Firefox, WebKit)
+- [x] Documentation
+  - Removed debug statements from frame.rs
+  - Added rustdoc to ElementHandle methods
+  - Link to Playwright ElementHandle docs
+
+**Files Created:**
+- `crates/playwright-core/src/protocol/element_handle.rs`
+- `crates/playwright-core/tests/element_handle_test.rs`
+
+**Files Modified:**
+- `crates/playwright-core/src/protocol/frame.rs`
+- `crates/playwright-core/src/protocol/page.rs`
+- `crates/playwright-core/src/protocol/locator.rs`
+- `crates/playwright-core/src/protocol/mod.rs`
+- `crates/playwright-core/src/object_factory.rs`
+- `crates/playwright-core/src/error.rs` (added ElementNotFound variant)
+- `crates/playwright-core/tests/screenshot_test.rs`
+- `crates/playwright-core/tests/test_server.rs` (added `/locators.html` route)
+
+**Acceptance Criteria:** ✅ All Met
+- ✅ ElementHandle is a proper ChannelOwner protocol object
+- ✅ query_selector methods work correctly
+- ✅ ElementHandle.screenshot() captures element screenshots
+- ✅ locator.screenshot() works via ElementHandle
+- ✅ All tests pass cross-browser (Chromium, Firefox, WebKit)
+- ✅ Debug statements removed
+
+---
+
+### Slice 2: Screenshot Options (Type, Quality, Full Page, Clip)
+
+**Goal:** Implement ScreenshotOptions struct with builder pattern for page and element screenshots.
+
+**Why Second:** Second-highest priority deferred item. Users need JPEG, full-page, and clip options.
+
+**Tasks:**
+- [ ] Create ScreenshotOptions struct
+- [ ] Create ScreenshotType enum (Png, Jpeg)
+- [ ] Create ScreenshotClip struct
+- [ ] Implement builder pattern
+- [ ] Update page.screenshot() to accept ScreenshotOptions
+- [ ] Update ElementHandle.screenshot() to accept ScreenshotOptions
+- [ ] Tests for all option combinations
+- [ ] Cross-browser tests
+
+---
+
+### Slice 3: Navigation Error Handling
+
+**Goal:** Add timeout tests and error handling for navigation methods.
+
+**Why Third:** High-priority deferred item from Phase 3 Slice 1.
+
+**Tasks:**
+- [ ] Test goto() timeout errors
+- [ ] Test reload() timeout errors
+- [ ] Test wait_until option behavior
+- [ ] Verify descriptive error messages
+- [ ] Cross-browser error tests
+
+---
+
+### Slice 4: ClickOptions with Builder Pattern
+
+**Goal:** Implement ClickOptions with position, modifiers, button, force, trial options.
+
+**Why Fourth:** Most commonly used action option. Foundation for other action options.
+
+**Tasks:**
+- [ ] Create ClickOptions struct with builder
+- [ ] Create MouseButton enum
+- [ ] Create KeyboardModifier enum
+- [ ] Create Position struct
+- [ ] Update click() and dblclick() signatures
+- [ ] Serialize options to protocol format
+- [ ] Tests with position, modifiers, button options
+- [ ] Test trial option (dry-run)
+
+---
+
+### Slice 5: Other Action Options
+
+**Goal:** Implement remaining action options (Fill, Press, Check, Hover, Select, Keyboard, Mouse).
+
+**Why Fifth:** Complete the options pattern for all deferred actions.
+
+**Tasks:**
+- [ ] FillOptions, PressOptions
+- [ ] CheckOptions, HoverOptions
+- [ ] SelectOptions (for select_option)
+- [ ] KeyboardOptions (delay)
+- [ ] MouseOptions (button, steps, delay)
+- [ ] Update all action method signatures
+- [ ] Comprehensive option tests
+
+---
+
+### Slice 6: SelectOption Variants
+
+**Goal:** Support selection by value, label, or index (not just value).
+
+**Why Sixth:** Medium-priority enhancement for select_option.
+
+**Tasks:**
+- [ ] Create SelectOption enum (Value, Label, Index)
+- [ ] Update select_option() to accept SelectOption
+- [ ] Update select_option_multiple() similarly
+- [ ] Protocol serialization for each variant
+- [ ] Tests for label and index selection
+
+---
+
+### Slice 7: Documentation and Polish
+
+**Goal:** Complete Phase 4 documentation and address any remaining deferred items.
+
+**Tasks:**
+- [ ] Complete rustdoc for all new types
+- [ ] Update README with Phase 4 examples
+- [ ] Update roadmap.md
+- [ ] Review all Phase 3 deferrals - confirm addressed
+- [ ] Update CLAUDE.md if needed
+
+---
 
 This order prioritizes:
 - High-impact features (ElementHandles, screenshot options)

@@ -169,6 +169,151 @@ impl Frame {
         Ok(response.value)
     }
 
+    /// Returns the first element matching the selector, or None if not found.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    /// page.goto("https://example.com", None).await?;
+    ///
+    /// if let Some(element) = page.query_selector("h1").await? {
+    ///     let screenshot = element.screenshot(None).await?;
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-frame#frame-query-selector>
+    pub async fn query_selector(
+        &self,
+        selector: &str,
+    ) -> Result<Option<Arc<crate::protocol::ElementHandle>>> {
+        let response: serde_json::Value = self
+            .channel()
+            .send(
+                "querySelector",
+                serde_json::json!({
+                    "selector": selector
+                }),
+            )
+            .await?;
+
+        // Check if response is empty (no element found)
+        if response.as_object().map(|o| o.is_empty()).unwrap_or(true) {
+            return Ok(None);
+        }
+
+        // Try different possible field names
+        let element_value = if let Some(elem) = response.get("element") {
+            elem
+        } else if let Some(elem) = response.get("handle") {
+            elem
+        } else {
+            // Maybe the response IS the guid object itself
+            &response
+        };
+
+        if element_value.is_null() {
+            return Ok(None);
+        }
+
+        // Element response contains { guid: "elementHandle@123" }
+        let guid = element_value["guid"].as_str().ok_or_else(|| {
+            crate::error::Error::ProtocolError("Element GUID missing".to_string())
+        })?;
+
+        // Look up the ElementHandle object in the connection's object registry
+        let connection = self.base.connection();
+        let element = connection.get_object(guid).await?;
+
+        // Downcast to ElementHandle
+        let handle = element
+            .as_any()
+            .downcast_ref::<crate::protocol::ElementHandle>()
+            .map(|e| Arc::new(e.clone()))
+            .ok_or_else(|| {
+                crate::error::Error::ProtocolError(format!(
+                    "Object {} is not an ElementHandle",
+                    guid
+                ))
+            })?;
+
+        Ok(Some(handle))
+    }
+
+    /// Returns all elements matching the selector.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    /// page.goto("https://example.com", None).await?;
+    ///
+    /// let paragraphs = page.query_selector_all("p").await?;
+    /// println!("Found {} paragraphs", paragraphs.len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-frame#frame-query-selector-all>
+    pub async fn query_selector_all(
+        &self,
+        selector: &str,
+    ) -> Result<Vec<Arc<crate::protocol::ElementHandle>>> {
+        #[derive(Deserialize)]
+        struct QueryAllResponse {
+            elements: Vec<serde_json::Value>,
+        }
+
+        let response: QueryAllResponse = self
+            .channel()
+            .send(
+                "querySelectorAll",
+                serde_json::json!({
+                    "selector": selector
+                }),
+            )
+            .await?;
+
+        // Convert GUID responses to ElementHandle objects
+        let connection = self.base.connection();
+        let mut handles = Vec::new();
+
+        for element_value in response.elements {
+            let guid = element_value["guid"].as_str().ok_or_else(|| {
+                crate::error::Error::ProtocolError("Element GUID missing".to_string())
+            })?;
+
+            let element = connection.get_object(guid).await?;
+
+            let handle = element
+                .as_any()
+                .downcast_ref::<crate::protocol::ElementHandle>()
+                .map(|e| Arc::new(e.clone()))
+                .ok_or_else(|| {
+                    crate::error::Error::ProtocolError(format!(
+                        "Object {} is not an ElementHandle",
+                        guid
+                    ))
+                })?;
+
+            handles.push(handle);
+        }
+
+        Ok(handles)
+    }
+
     // Locator delegate methods
     // These are called by Locator to perform actual queries
 
@@ -639,14 +784,6 @@ impl Frame {
             )
             .await
     }
-
-    // TODO: Element screenshots require ElementHandle protocol support
-    // Deferred to Phase 4 - Frame.screenshot with selector isn't supported by protocol
-    //
-    // /// Takes a screenshot of an element matching the selector.
-    // pub(crate) async fn locator_screenshot(&self, selector: &str) -> Result<Vec<u8>> {
-    //     ...
-    // }
 }
 
 impl ChannelOwner for Frame {

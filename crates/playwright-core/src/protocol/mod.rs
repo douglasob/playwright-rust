@@ -14,6 +14,7 @@
 pub mod browser;
 pub mod browser_context;
 pub mod browser_type;
+pub mod element_handle;
 pub mod frame;
 pub mod keyboard;
 pub mod locator;
@@ -27,6 +28,7 @@ pub mod root;
 pub use browser::Browser;
 pub use browser_context::BrowserContext;
 pub use browser_type::BrowserType;
+pub use element_handle::ElementHandle;
 pub use frame::Frame;
 pub use keyboard::Keyboard;
 pub use locator::Locator;

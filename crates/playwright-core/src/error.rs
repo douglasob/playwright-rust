@@ -59,4 +59,8 @@ pub enum Error {
     /// Invalid argument provided to method
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
+
+    /// Element not found by selector
+    #[error("Element not found: {0}")]
+    ElementNotFound(String),
 }

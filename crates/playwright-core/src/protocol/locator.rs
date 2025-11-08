@@ -268,15 +268,45 @@ impl Locator {
             .await
     }
 
-    // TODO: Element screenshots require ElementHandle protocol support
-    // Deferred to Phase 4 - need to implement ElementHandles
-    //
-    // /// Takes a screenshot of the element and returns the image bytes.
-    // ///
-    // /// See: <https://playwright.dev/docs/api/class-locator#locator-screenshot>
-    // pub async fn screenshot(&self, _options: Option<()>) -> Result<Vec<u8>> {
-    //     self.frame.locator_screenshot(&self.selector).await
-    // }
+    /// Takes a screenshot of the element and returns the image bytes.
+    ///
+    /// This method uses strict mode - it will fail if the selector matches multiple elements.
+    /// Use `first()`, `last()`, or `nth()` to refine the selector to a single element.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    /// page.goto("https://example.com", None).await?;
+    ///
+    /// let heading = page.locator("h1").await;
+    /// let screenshot = heading.screenshot(None).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-screenshot>
+    pub async fn screenshot(&self, _options: Option<()>) -> Result<Vec<u8>> {
+        // Query for the element using strict mode (should return exactly one)
+        let element = self
+            .frame
+            .query_selector(&self.selector)
+            .await?
+            .ok_or_else(|| {
+                crate::error::Error::ElementNotFound(format!(
+                    "Element not found: {}",
+                    self.selector
+                ))
+            })?;
+
+        // Delegate to ElementHandle.screenshot()
+        element.screenshot(None).await
+    }
 }
 
 impl std::fmt::Debug for Locator {

@@ -1,14 +1,13 @@
-// Integration tests for screenshot functionality
+// Integration tests for ElementHandle functionality
 //
 // Following TDD: Write tests first (Red), then implement (Green)
 //
 // Tests cover:
-// - page.screenshot() with default options
-// - page.screenshot() saves to file
-// - page.screenshot() returns bytes
-// - page.screenshot() with full_page option
-// - page.screenshot() with type (png/jpeg)
-// - locator.screenshot() captures element
+// - page.query_selector() returns ElementHandle
+// - page.query_selector() returns None when not found
+// - page.query_selector_all() returns multiple ElementHandles
+// - ElementHandle.screenshot() captures element screenshot
+// - locator.screenshot() delegates to ElementHandle
 
 mod test_server;
 
@@ -16,7 +15,7 @@ use playwright_core::protocol::Playwright;
 use test_server::TestServer;
 
 #[tokio::test]
-async fn test_page_screenshot_returns_bytes() {
+async fn test_query_selector_returns_element_handle() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -32,22 +31,123 @@ async fn test_page_screenshot_returns_bytes() {
         .await
         .expect("Failed to navigate");
 
-    // Test: Screenshot returns bytes
-    let bytes = page
+    // Test: query_selector returns Some(ElementHandle) for existing element
+    let element = page
+        .query_selector("h1")
+        .await
+        .expect("Failed to query selector");
+
+    assert!(element.is_some(), "Should find h1 element");
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+#[tokio::test]
+async fn test_query_selector_returns_none_when_not_found() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .chromium()
+        .launch()
+        .await
+        .expect("Failed to launch browser");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/locators.html", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Test: query_selector returns None for non-existent element
+    let element = page
+        .query_selector(".does-not-exist")
+        .await
+        .expect("Failed to query selector");
+
+    assert!(
+        element.is_none(),
+        "Should return None for non-existent element"
+    );
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+#[tokio::test]
+async fn test_query_selector_all_returns_multiple() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .chromium()
+        .launch()
+        .await
+        .expect("Failed to launch browser");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/locators.html", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Test: query_selector_all returns Vec of ElementHandles
+    let elements = page
+        .query_selector_all("p")
+        .await
+        .expect("Failed to query selector all");
+
+    // locators.html has 4 paragraphs
+    assert_eq!(elements.len(), 4, "Should find 4 paragraph elements");
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+#[tokio::test]
+async fn test_element_handle_screenshot() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .chromium()
+        .launch()
+        .await
+        .expect("Failed to launch browser");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/locators.html", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Test: ElementHandle.screenshot() captures element screenshot
+    let element = page
+        .query_selector("h1")
+        .await
+        .expect("Failed to query selector")
+        .expect("h1 should exist");
+
+    let bytes = element
         .screenshot(None)
         .await
-        .expect("Failed to take screenshot");
+        .expect("Failed to take element screenshot");
 
     // Verify bytes are not empty and look like PNG
-    assert!(!bytes.is_empty());
-    assert_eq!(&bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]); // PNG magic bytes
+    assert!(!bytes.is_empty(), "Screenshot bytes should not be empty");
+    assert_eq!(
+        &bytes[0..4],
+        &[0x89, 0x50, 0x4E, 0x47],
+        "Screenshot should be PNG format"
+    );
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
 
 #[tokio::test]
-async fn test_page_screenshot_saves_to_file() {
+async fn test_locator_screenshot_via_element_handle() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -63,90 +163,20 @@ async fn test_page_screenshot_saves_to_file() {
         .await
         .expect("Failed to navigate");
 
-    // Create temp file path
-    let temp_dir = std::env::temp_dir();
-    let screenshot_path = temp_dir.join("playwright_test_screenshot.png");
-
-    // Test: Screenshot saves to file
-    let bytes = page
-        .screenshot_to_file(&screenshot_path, None)
-        .await
-        .expect("Failed to take screenshot");
-
-    // Verify file exists
-    assert!(screenshot_path.exists());
-
-    // Verify bytes were returned
-    assert!(!bytes.is_empty());
-
-    // Verify file content matches returned bytes
-    let file_bytes = std::fs::read(&screenshot_path).expect("Failed to read screenshot file");
-    assert_eq!(bytes, file_bytes);
-
-    // Cleanup
-    std::fs::remove_file(screenshot_path).expect("Failed to remove screenshot file");
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_page_screenshot_full_page() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/locators.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Test: Full page screenshot (captures beyond viewport)
-    // TODO: Need ScreenshotOptions with full_page field
-    let bytes = page
-        .screenshot(None)
-        .await
-        .expect("Failed to take full page screenshot");
-
-    assert!(!bytes.is_empty());
-    assert_eq!(&bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]); // PNG
-
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_locator_screenshot() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/locators.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Test: Element screenshot via locator
-    let heading = page.locator("h1").await;
-    let bytes = heading
+    // Test: locator.screenshot() delegates to ElementHandle
+    let locator = page.locator("h1").await;
+    let bytes = locator
         .screenshot(None)
         .await
         .expect("Failed to take locator screenshot");
 
     // Verify bytes are not empty and look like PNG
-    assert!(!bytes.is_empty());
-    assert_eq!(&bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]); // PNG magic bytes
+    assert!(!bytes.is_empty(), "Screenshot bytes should not be empty");
+    assert_eq!(
+        &bytes[0..4],
+        &[0x89, 0x50, 0x4E, 0x47],
+        "Screenshot should be PNG format"
+    );
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -155,7 +185,7 @@ async fn test_locator_screenshot() {
 // Cross-browser tests
 
 #[tokio::test]
-async fn test_screenshot_firefox() {
+async fn test_element_handle_screenshot_firefox() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -171,10 +201,16 @@ async fn test_screenshot_firefox() {
         .await
         .expect("Failed to navigate");
 
-    let bytes = page
+    let element = page
+        .query_selector("h1")
+        .await
+        .expect("Failed to query selector")
+        .expect("h1 should exist");
+
+    let bytes = element
         .screenshot(None)
         .await
-        .expect("Failed to take screenshot");
+        .expect("Failed to take element screenshot");
 
     assert!(!bytes.is_empty());
     assert_eq!(&bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]);
@@ -184,7 +220,7 @@ async fn test_screenshot_firefox() {
 }
 
 #[tokio::test]
-async fn test_screenshot_webkit() {
+async fn test_element_handle_screenshot_webkit() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -200,10 +236,16 @@ async fn test_screenshot_webkit() {
         .await
         .expect("Failed to navigate");
 
-    let bytes = page
+    let element = page
+        .query_selector("h1")
+        .await
+        .expect("Failed to query selector")
+        .expect("h1 should exist");
+
+    let bytes = element
         .screenshot(None)
         .await
-        .expect("Failed to take screenshot");
+        .expect("Failed to take element screenshot");
 
     assert!(!bytes.is_empty());
     assert_eq!(&bytes[0..4], &[0x89, 0x50, 0x4E, 0x47]);

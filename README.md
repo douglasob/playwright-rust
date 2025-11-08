@@ -110,10 +110,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     mouse.move_to(100, 200, None).await?;
     mouse.click(100, 200, None).await?;
 
-    // Take screenshot
+    // Take screenshots
     let screenshot_bytes = page.screenshot(None).await?;
     // Or save to file:
     // page.screenshot_to_file(&PathBuf::from("screenshot.png"), None).await?;
+
+    // Element screenshot
+    let element_screenshot = heading.screenshot(None).await?;
 
     // Cleanup
     page.close().await?;
@@ -145,10 +148,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - ✅ File uploads (`set_input_files()`, multiple files)
 - ✅ Low-level keyboard control (`keyboard.down()`, `up()`, `press()`, `type_text()`, `insert_text()`)
 - ✅ Low-level mouse control (`mouse.move_to()`, `click()`, `dblclick()`, `down()`, `up()`, `wheel()`)
-- ✅ Screenshots (`page.screenshot()`, save to file)
+- ✅ Screenshots (`page.screenshot()`, `locator.screenshot()`, save to file)
+- ✅ Element queries (`page.query_selector()`, `query_selector_all()`)
 - ✅ Proper lifecycle management and cleanup
 
-**Coming next:** Waiting methods, assertions, network interception
+**Coming next:** Screenshot options (JPEG, full-page, clip), action options, assertions
 
 ## Installation
 

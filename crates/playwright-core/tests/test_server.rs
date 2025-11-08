@@ -29,6 +29,7 @@ impl TestServer {
             .route("/dblclick.html", get(dblclick_page))
             .route("/keyboard.html", get(keyboard_page))
             .route("/locator.html", get(locator_page))
+            .route("/locators.html", get(locators_page))
             .route("/checkbox.html", get(checkbox_page))
             .route("/hover.html", get(hover_page))
             .route("/select.html", get(select_page))
@@ -181,6 +182,30 @@ async fn locator_page() -> Response<Body> {
   <p id="p1">First paragraph</p>
   <p id="p2">Second paragraph</p>
   <p id="p3">Third paragraph</p>
+  <div class="container">
+    <span id="nested">Nested element</span>
+  </div>
+  <div id="hidden" style="display: none;">Hidden element</div>
+</body>
+</html>"#,
+        ))
+        .unwrap()
+}
+
+async fn locators_page() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "text/html")
+        .body(Body::from(
+            r#"<!DOCTYPE html>
+<html>
+<head><title>Locators Test</title></head>
+<body>
+  <h1>Test Page</h1>
+  <p id="p1">First paragraph</p>
+  <p id="p2">Second paragraph</p>
+  <p id="p3">Third paragraph</p>
+  <p id="p4">Fourth paragraph</p>
   <div class="container">
     <span id="nested">Nested element</span>
   </div>

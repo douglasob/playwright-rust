@@ -552,6 +552,63 @@ impl Page {
         }
     }
 
+    /// Returns the first element matching the selector, or None if not found.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    /// page.goto("https://example.com", None).await?;
+    ///
+    /// if let Some(element) = page.query_selector("h1").await? {
+    ///     let screenshot = element.screenshot(None).await?;
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-page#page-query-selector>
+    pub async fn query_selector(
+        &self,
+        selector: &str,
+    ) -> Result<Option<Arc<crate::protocol::ElementHandle>>> {
+        let frame = self.main_frame().await?;
+        frame.query_selector(selector).await
+    }
+
+    /// Returns all elements matching the selector.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::Playwright;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    /// page.goto("https://example.com", None).await?;
+    ///
+    /// let paragraphs = page.query_selector_all("p").await?;
+    /// println!("Found {} paragraphs", paragraphs.len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-page#page-query-selector-all>
+    pub async fn query_selector_all(
+        &self,
+        selector: &str,
+    ) -> Result<Vec<Arc<crate::protocol::ElementHandle>>> {
+        let frame = self.main_frame().await?;
+        frame.query_selector_all(selector).await
+    }
+
     /// Takes a screenshot of the page and returns the image bytes.
     ///
     /// # Example

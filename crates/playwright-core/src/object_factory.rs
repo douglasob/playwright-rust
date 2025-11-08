@@ -198,9 +198,25 @@ pub async fn create_object(
             )?)
         }
 
-        // TODO: Add more types as they are implemented in future phases:
-        // "ElementHandle" => Arc::new(ElementHandle::new(parent_owner, type_name, guid, initializer)?),
-        // ... etc
+        "ElementHandle" => {
+            // ElementHandle has Frame as parent
+            let parent_owner = match parent {
+                ParentOrConnection::Parent(p) => p,
+                ParentOrConnection::Connection(_) => {
+                    return Err(Error::ProtocolError(
+                        "ElementHandle must have Frame as parent".to_string(),
+                    ))
+                }
+            };
+
+            Arc::new(crate::protocol::ElementHandle::new(
+                parent_owner,
+                type_name,
+                guid,
+                initializer,
+            )?)
+        }
+
         _ => {
             // Unknown type - log warning and return error
             tracing::warn!("Unknown protocol type: {}", type_name);
