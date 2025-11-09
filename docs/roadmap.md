@@ -18,8 +18,8 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 - ✅ **v0.3.0** - Phase 3 complete (Page Interactions)
 - ✅ **v0.4.0** - Phase 4 complete (Options & ElementHandles)
 - ✅ **v0.5.0** - Phase 5 complete (Advanced Testing Features) - 2025-11-09
-- 🚀 **v0.6.0** - Phase 6 next (Production Hardening)
-- **v1.0.0** - Stable release, ready for broad adoption
+- 🚀 **v0.6.0** - Phase 6 in progress (Production Hardening) - Slice 1 complete
+- 📋 **v1.0.0** - Phase 7 (Real-World Validation & Final Polish)
 
 ---
 
@@ -125,22 +125,47 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 
 ## Phase 6: Production Hardening
 
-**Goal:** Polish for production use, comprehensive documentation, and prepare for broad community adoption.
+**Goal:** Polish for v0.6.0 release, address deferred items, comprehensive documentation.
 
-**Status:** Not Started
+**Status:** 🚀 In Progress (Slice 1 complete) - See [phase6-production-hardening.md](./implementation-plans/phase6-production-hardening.md)
 
 **Key Deliverables:**
-- Comprehensive test suite (unit, integration, cross-browser)
-- Doctest infrastructure for runnable documentation examples
-- Error handling refinement (helpful error messages)
-- Performance optimization (benchmark suite)
+- Windows support (stdio cleanup fix) ✅
+- Complete assertion API (to_be_focused)
+- Main document fulfillment investigation
 - Documentation completeness (rustdoc for all public APIs)
 - Examples covering all major features
 - Migration guide from other Rust browser automation libraries
-- Full Windows support (fix stdio cleanup issues)
-- CI/CD pipeline hardening (Linux, macOS, Windows)
-- Contributor guide
+- Performance optimization (benchmark suite)
 - Stability testing (memory leaks, resource cleanup)
+- v0.6.0 published to crates.io
+
+---
+
+## Phase 7: Real-World Validation & v1.0 Polish
+
+**Goal:** Real-world testing in folio, incorporate user feedback, final polish before v1.0.0.
+
+**Status:** Not Started (begins after v0.6.0 release)
+
+**Approach:**
+- Use playwright-rust in folio project for real-world validation
+- Gather feedback from early adopters (v0.6.0 users)
+- Address pain points discovered in production use
+- Final API refinements based on actual usage
+- Documentation improvements based on user questions
+- Performance tuning for real-world workloads
+
+**Key Deliverables:**
+- Folio integration complete and stable
+- User feedback incorporated
+- API refinements (if needed based on real-world use)
+- Final documentation polish
+- Production-ready examples from folio use cases
+- CI/CD pipeline hardening
+- Contributor guide
+- v1.0.0 published to crates.io
+- Ready for broad community adoption
 
 ---
 
@@ -186,13 +211,13 @@ Throughout all phases, we maintain:
 
 - **Phase completions** - Publish to crates.io as `0.x.0`
 - **Bug fixes** - Patch releases as `0.x.y`
-- **Phase 5 complete** - Publish `1.0.0` to crates.io
+- **Phase 6 complete** - Publish `v0.6.0` for early adopter feedback and real-world testing
+- **Phase 7 complete** - Publish `v1.0.0` after folio integration and user validation
 
 ### Communication
 
 - **GitHub Releases** - Release notes for each version
 - **Changelog** - Detailed change log in CHANGELOG.md
-- **Blog Posts** - Major milestone announcements
 - **Community Updates** - Regular progress updates
 
 ---

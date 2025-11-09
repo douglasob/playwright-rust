@@ -95,35 +95,108 @@ impl PlaywrightServer {
     ///
     /// Sends a shutdown signal to the server and waits for it to exit.
     ///
+    /// # Platform-Specific Behavior
+    ///
+    /// **Windows**: Explicitly closes stdio pipes before killing the process to avoid
+    /// hangs. On Windows, tokio uses a blocking threadpool for child process stdio,
+    /// and failing to close pipes before terminating can cause the cleanup to hang
+    /// indefinitely. Uses a timeout to prevent permanent hangs.
+    ///
+    /// **Unix**: Uses standard process termination with graceful wait.
+    ///
     /// # Errors
     ///
     /// Returns an error if the shutdown fails or times out.
     pub async fn shutdown(mut self) -> Result<()> {
-        // For now, just kill the process
-        // In the future, we should send a proper shutdown message via JSON-RPC
-        self.process
-            .kill()
-            .await
-            .map_err(|e| Error::LaunchFailed(format!("Failed to kill process: {}", e)))?;
+        #[cfg(windows)]
+        {
+            // Windows-specific cleanup: Close stdio pipes BEFORE killing process
+            // This prevents hanging due to Windows' blocking threadpool for stdio
+            drop(self.process.stdin.take());
+            drop(self.process.stdout.take());
+            drop(self.process.stderr.take());
 
-        // Wait for process to exit
-        let _ = self.process.wait().await;
+            // Kill the process
+            self.process
+                .kill()
+                .await
+                .map_err(|e| Error::LaunchFailed(format!("Failed to kill process: {}", e)))?;
 
-        Ok(())
+            // Wait for process to exit with timeout (Windows can hang without this)
+            match tokio::time::timeout(std::time::Duration::from_secs(5), self.process.wait()).await
+            {
+                Ok(Ok(_)) => Ok(()),
+                Ok(Err(e)) => Err(Error::LaunchFailed(format!(
+                    "Failed to wait for process: {}",
+                    e
+                ))),
+                Err(_) => {
+                    // Timeout - try one more kill
+                    let _ = self.process.start_kill();
+                    Err(Error::LaunchFailed(
+                        "Process shutdown timeout after 5 seconds".to_string(),
+                    ))
+                }
+            }
+        }
+
+        #[cfg(not(windows))]
+        {
+            // Unix: Standard graceful shutdown
+            self.process
+                .kill()
+                .await
+                .map_err(|e| Error::LaunchFailed(format!("Failed to kill process: {}", e)))?;
+
+            // Wait for process to exit
+            let _ = self.process.wait().await;
+
+            Ok(())
+        }
     }
 
     /// Force kill the server process
     ///
     /// This should only be used if graceful shutdown fails.
     ///
+    /// # Platform-Specific Behavior
+    ///
+    /// **Windows**: Closes stdio pipes before killing to prevent hangs.
+    ///
+    /// **Unix**: Standard force kill operation.
+    ///
     /// # Errors
     ///
     /// Returns an error if the kill operation fails.
     pub async fn kill(mut self) -> Result<()> {
+        #[cfg(windows)]
+        {
+            // Windows: Close pipes before killing
+            drop(self.process.stdin.take());
+            drop(self.process.stdout.take());
+            drop(self.process.stderr.take());
+        }
+
         self.process
             .kill()
             .await
             .map_err(|e| Error::LaunchFailed(format!("Failed to kill process: {}", e)))?;
+
+        #[cfg(windows)]
+        {
+            // On Windows, wait with timeout
+            let _ =
+                tokio::time::timeout(std::time::Duration::from_secs(2), self.process.wait()).await;
+        }
+
+        #[cfg(not(windows))]
+        {
+            // On Unix, optionally wait (don't block)
+            let _ =
+                tokio::time::timeout(std::time::Duration::from_millis(500), self.process.wait())
+                    .await;
+        }
+
         Ok(())
     }
 }

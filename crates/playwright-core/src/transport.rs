@@ -86,6 +86,16 @@ pub trait Transport: Send + Sync {
 ///            │  (dispatch)  │
 ///            └──────────────┘
 /// ```
+///
+/// # Platform-Specific Cleanup
+///
+/// **Windows**: The transport takes ownership of stdin/stdout from a Child process.
+/// When the transport is dropped, these handles are closed. On Windows, tokio uses
+/// a blocking threadpool for child process stdio, so proper cleanup requires that
+/// stdio handles be closed before terminating the parent process. See `PlaywrightServer`
+/// for the platform-specific cleanup logic.
+///
+/// **Unix**: Standard pipe cleanup applies - no special handling needed.
 pub struct PipeTransport<W, R>
 where
     W: AsyncWrite + Unpin + Send,

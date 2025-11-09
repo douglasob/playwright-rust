@@ -82,13 +82,8 @@ jobs:
     - name: Build
       run: cargo build --verbose
 
-    - name: Run tests (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Run tests (all platforms)
       run: cargo test --verbose --workspace
-
-    - name: Run tests (Windows - unit tests only)
-      if: runner.os == 'Windows'
-      run: cargo test --verbose --lib --workspace
 
     - name: Build all examples
       run: cargo build --package playwright --examples
