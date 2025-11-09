@@ -925,9 +925,8 @@ impl Page {
 
         // Find matching handler (last registered wins)
         for entry in handlers.iter().rev() {
-            // Simple substring matching for Slice 4a
-            // Will upgrade to glob patterns in Slice 4b
-            if url.contains(&entry.pattern) || entry.pattern.contains("**/*") {
+            // Use glob pattern matching
+            if Self::matches_pattern(&entry.pattern, &url) {
                 let handler = entry.handler.clone();
                 tokio::spawn(async move {
                     if let Err(e) = handler(route).await {
@@ -935,6 +934,25 @@ impl Page {
                     }
                 });
                 break;
+            }
+        }
+    }
+
+    /// Checks if a URL matches a glob pattern
+    ///
+    /// Supports standard glob patterns:
+    /// - `*` matches any characters except `/`
+    /// - `**` matches any characters including `/`
+    /// - `?` matches a single character
+    fn matches_pattern(pattern: &str, url: &str) -> bool {
+        use glob::Pattern;
+
+        // Try to compile the glob pattern
+        match Pattern::new(pattern) {
+            Ok(glob_pattern) => glob_pattern.matches(url),
+            Err(_) => {
+                // If pattern is invalid, fall back to exact string match
+                pattern == url
             }
         }
     }

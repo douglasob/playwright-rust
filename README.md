@@ -285,8 +285,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - ✅ Network route registration (`page.route()` with async closure handlers)
 - ✅ Route interception (`route.abort()`, `route.continue()`)
 - ✅ Request data access in route handlers (`route.request().url()`, `method()`)
+- ✅ Glob pattern matching for routes (`**/*.png`, `**/*`, etc.)
+- ✅ Multiple route handlers with priority (last registered wins)
 
-**Coming next:** Glob pattern matching for routes, route.fulfill(), downloads/dialogs
+**Coming next:** Cross-browser route testing, route.fulfill(), downloads/dialogs
 
 ## Installation
 

@@ -354,26 +354,50 @@ page.locator("input").expect().to_have_value("hello").await?;
 
 #### Slice 4b: Pattern Matching
 
-**Status:** ⏳ Pending
+**Status:** ✅ COMPLETE
 
 **Goal:** Support proper glob patterns for production use.
 
 **Tasks:**
-- [ ] Add `glob` crate dependency to Cargo.toml
-- [ ] Replace substring matching with glob pattern matching
-- [ ] Support multiple handlers with priority (last registered wins)
-- [ ] Test pattern edge cases (wildcards, subdirectories, extensions)
-- [ ] Implement pattern matching tests from original test suite
+- [x] Add `glob` crate dependency to Cargo.toml
+- [x] Replace substring matching with glob pattern matching
+- [x] Support multiple handlers with priority (last registered wins)
+- [x] Test pattern edge cases (wildcards, subdirectories, extensions)
+- [x] Implement pattern matching tests from original test suite
 
-**Test Targets:**
-- `test_route_pattern_matching` - Multiple routes with different patterns
-- `test_route_conditional_abort` - Conditional logic in handler based on URL
+**Implementation Details:**
+
+**Files Created:**
+- `crates/playwright-core/tests/network_route_pattern_test.rs` - 4 comprehensive pattern matching tests
+
+**Files Modified:**
+- `crates/playwright-core/Cargo.toml` - Added `glob = "0.3"` dependency
+- `crates/playwright-core/src/protocol/page.rs` - Added matches_pattern() using glob::Pattern, updated on_route_event() to use glob matching
+
+**Test Results:**
+- `test_route_pattern_matching_wildcard` - ✅ Multiple patterns with different handlers
+- `test_route_pattern_priority` - ✅ Last-registered-wins verification
+- `test_route_conditional_matching` - ✅ Conditional abort logic based on URL
+- `test_route_extension_patterns` - ✅ Path-based patterns (`**/`)
+
+**Key Implementation Details:**
+- Glob pattern matching: Uses `glob::Pattern` for production-ready URL matching
+- Pattern matching function:
+  ```rust
+  fn matches_pattern(pattern: &str, url: &str) -> bool {
+      use glob::Pattern;
+      match Pattern::new(pattern) {
+          Ok(glob_pattern) => glob_pattern.matches(url),
+          Err(_) => pattern == url,  // Fallback to exact match
+      }
+  }
+  ```
+- Handler priority: Last registered handler wins (reverse iteration in on_route_event)
+- Pattern types supported: `**/*`, `**/*.png`, `**/*.{css,js}`, `**/path`
+- Conditional logic: Handlers can inspect route.request().url() and decide abort vs continue
+- Type complexity fix: Created `RouteHandlerFuture` type alias for `Pin<Box<dyn Future<Output = Result<()>> + Send>>`
 
 **Why Second:** Builds on working infrastructure, adds production-ready matching
-
-**Files to Modify:**
-- `crates/playwright-core/Cargo.toml` - Add glob dependency
-- `crates/playwright-core/src/protocol/page.rs` - Upgrade pattern matching in on_route_event()
 
 ---
 
@@ -460,6 +484,6 @@ This order prioritizes:
 ---
 
 **Created:** 2025-11-08
-**Last Updated:** 2025-11-08
+**Last Updated:** 2025-11-08 (Slice 4b complete)
 
 ---
