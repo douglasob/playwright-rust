@@ -8,14 +8,23 @@
 // - expect().not().to_be_visible() - negation support
 // - Timeout behavior
 // - Cross-browser compatibility
+//
+// Performance Optimization (Phase 6):
+// - Combined related tests to minimize browser launches
+// - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
+// - Expected speedup: ~73% (11 tests → 3 tests)
 
 mod test_server;
 
 use playwright_core::{expect, protocol::Playwright};
 use test_server::TestServer;
 
+// ============================================================================
+// to_be_visible() Assertions
+// ============================================================================
+
 #[tokio::test]
-async fn test_to_be_visible_element_already_visible() {
+async fn test_to_be_visible_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -31,93 +40,40 @@ async fn test_to_be_visible_element_already_visible() {
         .await
         .expect("Failed to navigate");
 
-    // Test: Element that is already visible should pass immediately
+    // Test 1: Element that is already visible should pass immediately
     let button = page.locator("#btn").await;
     expect(button)
         .to_be_visible()
         .await
         .expect("Button should be visible");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_hidden_element_not_exists() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/button.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Test: Element that doesn't exist should be considered hidden
+    // Test 2: Negation - element should NOT be visible
     let nonexistent = page.locator("#does-not-exist").await;
-    expect(nonexistent)
-        .to_be_hidden()
-        .await
-        .expect("Nonexistent element should be hidden");
-
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_not_to_be_visible() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/button.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Test: Negation - element should NOT be visible
-    let nonexistent = page.locator("#does-not-exist").await;
-    expect(nonexistent)
+    expect(nonexistent.clone())
         .not()
         .to_be_visible()
         .await
         .expect("Nonexistent element should NOT be visible");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    // Test 3: Should timeout if element never appears
+    let result = expect(nonexistent)
+        .with_timeout(std::time::Duration::from_millis(500))
+        .to_be_visible()
+        .await;
 
-#[tokio::test]
-async fn test_to_be_visible_with_auto_retry() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
+    assert!(result.is_err(), "Should timeout for nonexistent element");
+    let error_message = result.unwrap_err().to_string();
+    assert!(
+        error_message.contains("timeout") || error_message.contains("Assertion"),
+        "Error message should mention timeout: {}",
+        error_message
+    );
 
-    // Create HTML with element that appears after delay
+    // Test 4: Auto-retry - assertion should wait and retry until element becomes visible
     page.goto(&format!("{}/", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Inject JavaScript to show element after 500ms
     page.evaluate(
         r#"
         const div = document.createElement('div');
@@ -134,7 +90,6 @@ async fn test_to_be_visible_with_auto_retry() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Assertion should wait and retry until element becomes visible
     let delayed = page.locator("#delayed-element").await;
     let start = std::time::Instant::now();
 
@@ -150,49 +105,39 @@ async fn test_to_be_visible_with_auto_retry() {
         elapsed
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    // Test 5: Custom timeout - element that appears after 200ms
+    page.evaluate(
+        r#"
+        const div = document.createElement('div');
+        div.id = 'slow-element';
+        div.textContent = 'Slow element';
+        div.style.display = 'none';
+        document.body.appendChild(div);
 
-#[tokio::test]
-async fn test_to_be_visible_timeout() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
+        setTimeout(() => {
+            div.style.display = 'block';
+        }, 200);
+        "#,
+    )
+    .await
+    .expect("Failed to inject script");
 
-    page.goto(&format!("{}/button.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Test: Should timeout if element never appears
-    let nonexistent = page.locator("#does-not-exist").await;
-    let result = expect(nonexistent)
-        .with_timeout(std::time::Duration::from_millis(500))
+    let slow = page.locator("#slow-element").await;
+    expect(slow)
         .to_be_visible()
-        .await;
-
-    assert!(result.is_err(), "Should timeout for nonexistent element");
-
-    let error_message = result.unwrap_err().to_string();
-    assert!(
-        error_message.contains("timeout") || error_message.contains("Assertion"),
-        "Error message should mention timeout: {}",
-        error_message
-    );
+        .await
+        .expect("Should wait up to 5s by default");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
 
+// ============================================================================
+// to_be_hidden() Assertions
+// ============================================================================
+
 #[tokio::test]
-async fn test_to_be_hidden_with_auto_retry() {
+async fn test_to_be_hidden_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -208,7 +153,14 @@ async fn test_to_be_hidden_with_auto_retry() {
         .await
         .expect("Failed to navigate");
 
-    // Inject JavaScript to hide element after delay
+    // Test 1: Element that doesn't exist should be considered hidden
+    let nonexistent = page.locator("#does-not-exist").await;
+    expect(nonexistent)
+        .to_be_hidden()
+        .await
+        .expect("Nonexistent element should be hidden");
+
+    // Test 2: Auto-retry - assertion should wait until element becomes hidden
     page.evaluate(
         r#"
         const btn = document.getElementById('btn');
@@ -220,7 +172,6 @@ async fn test_to_be_hidden_with_auto_retry() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Assertion should wait until element becomes hidden
     let button = page.locator("#btn").await;
     let start = std::time::Instant::now();
 
@@ -240,127 +191,70 @@ async fn test_to_be_hidden_with_auto_retry() {
     server.shutdown();
 }
 
+// ============================================================================
+// Cross-browser Smoke Test
+// ============================================================================
+
 #[tokio::test]
-async fn test_custom_timeout() {
+async fn test_cross_browser_smoke() {
+    // Smoke test to verify assertions work in Firefox and WebKit
+    // (Rust bindings use the same protocol layer for all browsers,
+    //  so we don't need exhaustive cross-browser testing for each assertion)
+
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Inject element that appears after 2 seconds
-    page.evaluate(
-        r#"
-        const div = document.createElement('div');
-        div.id = 'slow-element';
-        div.textContent = 'Slow element';
-        div.style.display = 'none';
-        document.body.appendChild(div);
-
-        setTimeout(() => {
-            div.style.display = 'block';
-        }, 200);
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    // Test: With default timeout (5s), should succeed
-    let slow = page.locator("#slow-element").await;
-    expect(slow)
-        .to_be_visible()
-        .await
-        .expect("Should wait up to 5s by default");
-
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-// Cross-browser tests
-
-#[tokio::test]
-async fn test_to_be_visible_firefox() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
+    // Test Firefox
+    let firefox = playwright
         .firefox()
         .launch()
         .await
         .expect("Failed to launch Firefox");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let firefox_page = firefox.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/button.html", server.url()), None)
+    firefox_page
+        .goto(&format!("{}/button.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    let button = page.locator("#btn").await;
-    expect(button)
+    let firefox_button = firefox_page.locator("#btn").await;
+    expect(firefox_button)
         .to_be_visible()
         .await
         .expect("Button should be visible in Firefox");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    firefox.close().await.expect("Failed to close Firefox");
 
-#[tokio::test]
-async fn test_to_be_hidden_webkit() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
+    // Test WebKit
+    let webkit = playwright
         .webkit()
         .launch()
         .await
         .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let webkit_page = webkit.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/button.html", server.url()), None)
+    webkit_page
+        .goto(&format!("{}/button.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    let nonexistent = page.locator("#does-not-exist").await;
-    expect(nonexistent)
+    let webkit_nonexistent = webkit_page.locator("#does-not-exist").await;
+    expect(webkit_nonexistent)
         .to_be_hidden()
         .await
         .expect("Nonexistent element should be hidden in WebKit");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_auto_retry_webkit() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .webkit()
-        .launch()
-        .await
-        .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
+    // Test auto-retry in WebKit
+    webkit_page
+        .goto(&format!("{}/", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test auto-retry in WebKit
-    page.evaluate(
-        r#"
+    webkit_page
+        .evaluate(
+            r#"
         const div = document.createElement('div');
         div.id = 'delayed-webkit';
         div.textContent = 'WebKit element';
@@ -371,16 +265,16 @@ async fn test_auto_retry_webkit() {
             div.style.display = 'block';
         }, 100);
         "#,
-    )
-    .await
-    .expect("Failed to inject script");
+        )
+        .await
+        .expect("Failed to inject script");
 
-    let delayed = page.locator("#delayed-webkit").await;
-    expect(delayed)
+    let webkit_delayed = webkit_page.locator("#delayed-webkit").await;
+    expect(webkit_delayed)
         .to_be_visible()
         .await
         .expect("Auto-retry should work in WebKit");
 
-    browser.close().await.expect("Failed to close browser");
+    webkit.close().await.expect("Failed to close WebKit");
     server.shutdown();
 }

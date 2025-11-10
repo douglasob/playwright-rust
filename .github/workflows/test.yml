@@ -46,8 +46,6 @@ jobs:
       with:
         path: drivers/
         key: ${{ runner.os }}-playwright-drivers-1.56.1
-        restore-keys: |
-          ${{ runner.os }}-playwright-drivers-
 
     - name: Cache Playwright Browsers (Linux/macOS)
       if: runner.os != 'Windows'

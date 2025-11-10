@@ -9,6 +9,11 @@
 // - expect().to_be_focused()
 // - Auto-retry behavior
 // - Cross-browser compatibility
+//
+// Performance Optimization (Phase 6):
+// - Combined related tests to minimize browser launches
+// - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
+// - Expected speedup: ~70% (85s → 25s for comprehensive coverage)
 
 mod test_server;
 
@@ -16,11 +21,11 @@ use playwright_core::{expect, protocol::Playwright};
 use test_server::TestServer;
 
 // ============================================================================
-// to_be_enabled() / to_be_disabled() tests
+// Button State Assertions (enabled/disabled)
 // ============================================================================
 
 #[tokio::test]
-async fn test_to_be_enabled() {
+async fn test_button_state_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -32,39 +37,22 @@ async fn test_to_be_enabled() {
         .expect("Failed to launch browser");
     let page = browser.new_page().await.expect("Failed to create page");
 
+    // Test 1: to_be_enabled() with existing button
     page.goto(&format!("{}/button.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test: Enabled button should pass
     let button = page.locator("#btn").await;
     expect(button)
         .to_be_enabled()
         .await
         .expect("Button should be enabled");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_disabled() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 2: to_be_disabled() with disabled button
     page.goto(&format!("{}/", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Create a disabled button
     page.evaluate(
         r#"
         const btn = document.createElement('button');
@@ -77,35 +65,13 @@ async fn test_to_be_disabled() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Disabled button should pass
-    let button = page.locator("#disabled-btn").await;
-    expect(button)
+    let disabled_button = page.locator("#disabled-btn").await;
+    expect(disabled_button.clone())
         .to_be_disabled()
         .await
         .expect("Button should be disabled");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_enabled_with_auto_retry() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create a button that becomes enabled after delay
+    // Test 3: to_be_enabled() with auto-retry (delayed enable)
     page.evaluate(
         r#"
         const btn = document.createElement('button');
@@ -122,49 +88,14 @@ async fn test_to_be_enabled_with_auto_retry() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Should wait for button to become enabled
-    let button = page.locator("#delayed-btn").await;
-    expect(button)
+    let delayed_button = page.locator("#delayed-btn").await;
+    expect(delayed_button)
         .to_be_enabled()
         .await
         .expect("Button should eventually be enabled");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_not_to_be_enabled() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create a disabled button
-    page.evaluate(
-        r#"
-        const btn = document.createElement('button');
-        btn.id = 'disabled-btn';
-        btn.disabled = true;
-        document.body.appendChild(btn);
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    // Test: Negation - disabled button should NOT be enabled
-    let button = page.locator("#disabled-btn").await;
-    expect(button)
+    // Test 4: .not().to_be_enabled() - negation test
+    expect(disabled_button.clone())
         .not()
         .to_be_enabled()
         .await
@@ -175,11 +106,11 @@ async fn test_not_to_be_enabled() {
 }
 
 // ============================================================================
-// to_be_checked() / to_be_unchecked() tests
+// Checkbox State Assertions (checked/unchecked)
 // ============================================================================
 
 #[tokio::test]
-async fn test_to_be_checked() {
+async fn test_checkbox_state_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -195,7 +126,7 @@ async fn test_to_be_checked() {
         .await
         .expect("Failed to navigate");
 
-    // Create a checked checkbox
+    // Test 1: to_be_checked() with checked checkbox
     page.evaluate(
         r#"
         const checkbox = document.createElement('input');
@@ -208,35 +139,13 @@ async fn test_to_be_checked() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Checked checkbox should pass
-    let checkbox = page.locator("#checked-box").await;
-    expect(checkbox)
+    let checked_checkbox = page.locator("#checked-box").await;
+    expect(checked_checkbox)
         .to_be_checked()
         .await
         .expect("Checkbox should be checked");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_unchecked() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create an unchecked checkbox
+    // Test 2: to_be_unchecked() with unchecked checkbox
     page.evaluate(
         r#"
         const checkbox = document.createElement('input');
@@ -249,35 +158,13 @@ async fn test_to_be_unchecked() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Unchecked checkbox should pass
-    let checkbox = page.locator("#unchecked-box").await;
-    expect(checkbox)
+    let unchecked_checkbox = page.locator("#unchecked-box").await;
+    expect(unchecked_checkbox)
         .to_be_unchecked()
         .await
         .expect("Checkbox should be unchecked");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_checked_with_auto_retry() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create checkbox that becomes checked after delay
+    // Test 3: to_be_checked() with auto-retry (delayed check)
     page.evaluate(
         r#"
         const checkbox = document.createElement('input');
@@ -294,9 +181,8 @@ async fn test_to_be_checked_with_auto_retry() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Should wait for checkbox to become checked
-    let checkbox = page.locator("#delayed-checkbox").await;
-    expect(checkbox)
+    let delayed_checkbox = page.locator("#delayed-checkbox").await;
+    expect(delayed_checkbox)
         .to_be_checked()
         .await
         .expect("Checkbox should eventually be checked");
@@ -306,11 +192,11 @@ async fn test_to_be_checked_with_auto_retry() {
 }
 
 // ============================================================================
-// to_be_editable() tests
+// Editable State Assertions
 // ============================================================================
 
 #[tokio::test]
-async fn test_to_be_editable() {
+async fn test_editable_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -326,7 +212,7 @@ async fn test_to_be_editable() {
         .await
         .expect("Failed to navigate");
 
-    // Create an editable input
+    // Test 1: to_be_editable() with normal input
     page.evaluate(
         r#"
         const input = document.createElement('input');
@@ -338,35 +224,13 @@ async fn test_to_be_editable() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Editable input should pass
-    let input = page.locator("#editable-input").await;
-    expect(input)
+    let editable_input = page.locator("#editable-input").await;
+    expect(editable_input)
         .to_be_editable()
         .await
         .expect("Input should be editable");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_not_to_be_editable() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create a readonly input
+    // Test 2: .not().to_be_editable() with readonly input
     page.evaluate(
         r#"
         const input = document.createElement('input');
@@ -379,9 +243,8 @@ async fn test_not_to_be_editable() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Readonly input should NOT be editable
-    let input = page.locator("#readonly-input").await;
-    expect(input)
+    let readonly_input = page.locator("#readonly-input").await;
+    expect(readonly_input)
         .not()
         .to_be_editable()
         .await
@@ -392,11 +255,11 @@ async fn test_not_to_be_editable() {
 }
 
 // ============================================================================
-// to_be_focused() tests (Phase 6 Slice 2)
+// Focus State Assertions
 // ============================================================================
 
 #[tokio::test]
-async fn test_to_be_focused() {
+async fn test_focus_assertions() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -412,7 +275,7 @@ async fn test_to_be_focused() {
         .await
         .expect("Failed to navigate");
 
-    // Create and focus an input
+    // Test 1: to_be_focused() with focused input
     page.evaluate(
         r#"
         const input = document.createElement('input');
@@ -425,35 +288,13 @@ async fn test_to_be_focused() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Focused input should pass
-    let input = page.locator("#focused-input").await;
-    expect(input)
+    let focused_input = page.locator("#focused-input").await;
+    expect(focused_input)
         .to_be_focused()
         .await
         .expect("Input should be focused");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_not_to_be_focused() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create an unfocused input
+    // Test 2: .not().to_be_focused() with unfocused input
     page.evaluate(
         r#"
         const input = document.createElement('input');
@@ -465,36 +306,14 @@ async fn test_not_to_be_focused() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Unfocused input should NOT be focused
-    let input = page.locator("#unfocused-input").await;
-    expect(input)
+    let unfocused_input = page.locator("#unfocused-input").await;
+    expect(unfocused_input)
         .not()
         .to_be_focused()
         .await
         .expect("Input should NOT be focused");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_focused_with_auto_retry() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create an input that becomes focused after delay
+    // Test 3: to_be_focused() with auto-retry (delayed focus)
     page.evaluate(
         r#"
         const input = document.createElement('input');
@@ -510,9 +329,8 @@ async fn test_to_be_focused_with_auto_retry() {
     .await
     .expect("Failed to inject script");
 
-    // Test: Should wait for input to become focused
-    let input = page.locator("#delayed-focused-input").await;
-    expect(input)
+    let delayed_focused_input = page.locator("#delayed-focused-input").await;
+    expect(delayed_focused_input)
         .to_be_focused()
         .await
         .expect("Input should eventually be focused");
@@ -521,192 +339,61 @@ async fn test_to_be_focused_with_auto_retry() {
     server.shutdown();
 }
 
-//  ============================================================================
-// Cross-browser tests
+// ============================================================================
+// Cross-browser Smoke Test
 // ============================================================================
 
 #[tokio::test]
-async fn test_to_be_enabled_firefox() {
+async fn test_cross_browser_smoke() {
+    // Smoke test to verify assertions work in Firefox and WebKit
+    // (Rust bindings use the same protocol layer for all browsers,
+    //  so we don't need exhaustive cross-browser testing for each assertion)
+
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
-    let browser = playwright
+
+    // Test Firefox
+    let firefox = playwright
         .firefox()
         .launch()
         .await
         .expect("Failed to launch Firefox");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let firefox_page = firefox.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/button.html", server.url()), None)
+    firefox_page
+        .goto(&format!("{}/button.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    let button = page.locator("#btn").await;
-    expect(button)
+    let firefox_button = firefox_page.locator("#btn").await;
+    expect(firefox_button)
         .to_be_enabled()
         .await
         .expect("Should work in Firefox");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    firefox.close().await.expect("Failed to close Firefox");
 
-#[tokio::test]
-async fn test_to_be_checked_webkit() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
+    // Test WebKit
+    let webkit = playwright
         .webkit()
         .launch()
         .await
         .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let webkit_page = webkit.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/", server.url()), None)
+    webkit_page
+        .goto(&format!("{}/button.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Create a checked checkbox
-    page.evaluate(
-        r#"
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = 'webkit-checkbox';
-        checkbox.checked = true;
-        document.body.appendChild(checkbox);
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    let checkbox = page.locator("#webkit-checkbox").await;
-    expect(checkbox)
-        .to_be_checked()
+    let webkit_button = webkit_page.locator("#btn").await;
+    expect(webkit_button)
+        .to_be_enabled()
         .await
         .expect("Should work in WebKit");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_editable_webkit() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .webkit()
-        .launch()
-        .await
-        .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create an editable input
-    page.evaluate(
-        r#"
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'webkit-input';
-        document.body.appendChild(input);
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    let input = page.locator("#webkit-input").await;
-    expect(input)
-        .to_be_editable()
-        .await
-        .expect("Should work in WebKit");
-
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_focused_firefox() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .firefox()
-        .launch()
-        .await
-        .expect("Failed to launch Firefox");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create and focus an input
-    page.evaluate(
-        r#"
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'firefox-focused-input';
-        document.body.appendChild(input);
-        input.focus();
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    let input = page.locator("#firefox-focused-input").await;
-    expect(input)
-        .to_be_focused()
-        .await
-        .expect("Should work in Firefox");
-
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
-
-#[tokio::test]
-async fn test_to_be_focused_webkit() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .webkit()
-        .launch()
-        .await
-        .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Create and focus an input
-    page.evaluate(
-        r#"
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'webkit-focused-input';
-        document.body.appendChild(input);
-        input.focus();
-        "#,
-    )
-    .await
-    .expect("Failed to inject script");
-
-    let input = page.locator("#webkit-focused-input").await;
-    expect(input)
-        .to_be_focused()
-        .await
-        .expect("Should work in WebKit");
-
-    browser.close().await.expect("Failed to close browser");
+    webkit.close().await.expect("Failed to close WebKit");
     server.shutdown();
 }
