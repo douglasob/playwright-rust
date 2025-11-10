@@ -127,10 +127,10 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 
 **Goal:** Polish for v0.6.0 release, address deferred items, comprehensive documentation.
 
-**Status:** 🚀 In Progress (Slice 1 complete) - See [phase6-production-hardening.md](./implementation-plans/phase6-production-hardening.md)
+**Status:** 🚀 In Progress - See [phase6-production-hardening.md](./implementation-plans/phase6-production-hardening.md)
 
 **Key Deliverables:**
-- Windows support (stdio cleanup fix) ✅
+- ✅ Windows support (stdio cleanup fix, CI stability flags)
 - Complete assertion API (to_be_focused)
 - Main document fulfillment investigation
 - Documentation completeness (rustdoc for all public APIs)

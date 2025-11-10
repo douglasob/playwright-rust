@@ -432,7 +432,9 @@ npx playwright@1.49.0 install chromium firefox webkit
 - Mismatched versions will cause "Executable doesn't exist" errors during tests
 
 **Platform Support:**
-- ✅ **Windows, macOS, Linux**: Full support - all tests pass on all platforms
+- ✅ **Windows**: Full support with CI stability flags enabled (2025-11-09)
+- ✅ **macOS**: Full support
+- ✅ **Linux**: Full support
 
 **Note:** CI automatically installs the correct browser versions - see `.github/workflows/test.yml`
 
