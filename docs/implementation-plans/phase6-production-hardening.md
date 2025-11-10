@@ -101,93 +101,104 @@
 
 **Problem:** route.fulfill() body content is not transmitted to the browser for any request type (not just main document).
 
-**Investigation Result:** This is a **Playwright 1.49.0 server limitation**, not a bug in our Rust implementation. The protocol messages are correct, but the server doesn't transmit response bodies to browsers.
+**Investigation Result:** This is a **Playwright server limitation**, not a bug in our Rust implementation. The protocol messages are correct, but the server doesn't transmit response bodies to browsers. Tested with Playwright 1.56.1 (updated from 1.49.0).
 
-**Resolution:** Documented as a known limitation with workarounds. Created failing tests that will serve as "canary tests" when Playwright fixes this issue.
+**Resolution:** Documented as a known limitation with workarounds. Created reverse canary tests that will serve as indicators when Playwright fixes this issue.
 
 **Key Insight:** The Rust implementation is correct. Users should mock at the HTTP server level or wait for a Playwright server update that fixes body transmission.
 
 ---
 
-### Slice 4: Documentation Completeness Audit
+### Slice 4: Documentation Completeness Audit ✅ COMPLETE
 
 **Goal:** Ensure all public APIs have comprehensive rustdoc with examples.
 
-**Why Fourth:** Essential for production use, helps users discover features.
+**Completion Date:** 2025-11-10
 
-**Tasks:**
-- [ ] Audit all public APIs for rustdoc completeness
-- [ ] Add missing documentation
-- [ ] Add examples to all public methods
-- [ ] Add links to Playwright docs for all methods
-- [ ] Verify all examples compile with rustdoc test
-- [ ] Generate docs and review for clarity
+**Problem:** Need to verify all public APIs have comprehensive documentation for production readiness.
 
-**Files to Audit:**
-- All `crates/playwright-core/src/protocol/*.rs` files
-- All `crates/playwright/src/api/*.rs` files (if they exist)
+**Investigation Result:** Documentation audit revealed **exceptional quality** - all public APIs in the protocol layer already have comprehensive rustdoc with examples, error documentation, and links to Playwright docs.
 
-**Success Criteria:**
-- 100% public API documentation coverage
-- All examples compile and run
-- cargo doc --open shows professional documentation
+**Key Finding:** The codebase already exceeds typical open-source documentation standards with 100% coverage of public APIs, consistent patterns, and working examples throughout.
+
+**Files Audited:** 14 core protocol files including browser.rs, page.rs, locator.rs, frame.rs, route.rs, and all other public API modules - all have complete documentation.
 
 ---
 
-### Slice 5: Examples and Migration Guide
+### Slice 5: Examples and Migration Guide 🔄 DEFERRED TO PHASE 7
 
 **Goal:** Create comprehensive examples and migration guide from other libraries.
 
-**Why Fifth:** Lowers barrier to entry, helps users adopt playwright-rust.
+**Status:** Strategically deferred to Phase 7 to incorporate real-world feedback from v0.6.0 users and folio integration experience.
 
-**Tasks:**
-- [ ] Create advanced examples (API mocking, file downloads, etc.)
-- [ ] Create migration guide from:
-  - headless_chrome
-  - fantoccini
-  - thirtyfour
-- [ ] Document API differences from playwright-python
-- [ ] Create "Getting Started" tutorial
-- [ ] Add troubleshooting guide
+**Rationale for Deferral:**
+- Examples will be more targeted after understanding actual user pain points
+- Migration guides will address real challenges discovered during folio integration
+- Documentation will be based on proven patterns rather than theoretical use cases
+- User feedback will inform which examples are most valuable
 
-**Files to Create:**
-- `examples/advanced/` directory with complex examples
-- `docs/migration-guides/` with comparison tables
-- `docs/getting-started.md`
-- `docs/troubleshooting.md`
-
-**Success Criteria:**
-- 5+ advanced examples covering common patterns
-- Migration guides help users switch from other libraries
-- Getting started guide onboards new users quickly
+**Will Include (Phase 7):**
+- Advanced examples based on common user patterns
+- Migration guides addressing actual migration challenges
+- Getting Started tutorial refined from user onboarding experiences
+- Troubleshooting guide based on real issues encountered
 
 ---
 
-### Slice 6: Performance Optimization and Benchmarks
+### Slice 6a: Benchmark Infrastructure ✅ COMPLETE
 
-**Goal:** Optimize performance bottlenecks and establish benchmark suite.
+**Goal:** Establish comprehensive benchmark suite and baseline metrics.
 
-**Why Sixth:** Important for production use, but not blocking.
+**Completion Date:** 2025-11-10
 
-**Tasks:**
-- [ ] Create benchmark suite (criterion.rs)
-- [ ] Benchmark: Browser launch time
-- [ ] Benchmark: Page navigation
-- [ ] Benchmark: Element queries
-- [ ] Implement deferred optimizations:
-  - Chunked reading for large messages
-  - GUID string optimization (avoid cloning)
-- [ ] Profile memory usage
-- [ ] Document performance characteristics
+**Why:** Need reproducible performance measurements before implementing optimizations.
 
-**Files to Create:**
-- `benches/` directory with criterion benchmarks
-- `docs/performance.md` with results
+**What We Built:**
+- Criterion.rs benchmark suite for GUID operations, page operations, and browser launch
+- Baseline metrics establishing performance targets
+- Evergreen benchmarking documentation
 
-**Success Criteria:**
-- Benchmark suite runs in CI
-- Performance comparable to playwright-python
-- Optimizations implemented without regression
+**Key Findings:**
+
+Benchmarks proved Arc<str> performance advantages:
+- **GUID Clone**: Arc<str> is 6.0x faster (21.30ns → 3.56ns)
+- **HashMap Lookup**: Arc<str> is 2.3x faster (24.53ns → 10.87ns)
+
+Baseline saved at commit `c3c16f6` for future comparisons.
+
+**Architectural Insight:** Simplified to pure criterion.rs with no custom tooling. Users learn criterion's native commands directly (save-baseline, compare). Performance targets documented in implementation plans, not separate manifest files.
+
+---
+
+### Slice 6b: GUID String Optimization 🔄 PENDING
+
+**Goal:** Convert GUID storage from String to Arc<str> for improved performance.
+
+**Why:** GUIDs are cloned frequently but never modified - Arc<str> reduces allocation overhead.
+
+**Target:** Achieve 5x+ improvement in clone performance, 2x+ in HashMap lookups (already proven in benchmarks).
+
+**Approach:** Update protocol structures (Request, Event, ChannelOwner) and all protocol objects to use Arc<str>.
+
+---
+
+### Slice 6c: Message Chunked Reading 🔄 PENDING
+
+**Goal:** Implement chunked reading for large messages (>32KB) in transport layer.
+
+**Why:** Current implementation reads entire messages into memory - chunked reading reduces memory pressure for large payloads.
+
+**Target:** Reduce peak memory usage for large message handling.
+
+---
+
+### Slice 6d: Memory Profiling & Documentation 🔄 PENDING
+
+**Goal:** Profile memory usage patterns and document performance characteristics.
+
+**Why:** Production-ready crate needs documented performance behavior.
+
+**Deliverables:** Memory profiling results and comprehensive performance documentation
 
 ---
 

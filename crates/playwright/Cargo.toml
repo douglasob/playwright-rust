@@ -19,3 +19,17 @@ tokio = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["fmt"] }
+criterion = { version = "0.7", features = ["html_reports", "async_tokio"] }
+urlencoding = "2.1"
+
+[[bench]]
+name = "browser_operations"
+harness = false
+
+[[bench]]
+name = "page_operations"
+harness = false
+
+[[bench]]
+name = "guid_operations"
+harness = false
