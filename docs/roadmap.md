@@ -18,7 +18,7 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 - ✅ **v0.3.0** - Phase 3 complete (Page Interactions)
 - ✅ **v0.4.0** - Phase 4 complete (Options & ElementHandles)
 - ✅ **v0.5.0** - Phase 5 complete (Advanced Testing Features) - 2025-11-09
-- 🚀 **v0.6.0** - Phase 6 in progress (Production Hardening) - Slice 1 complete
+- 🚀 **v0.6.0** - Phase 6 in progress (Production Hardening) - Slices 1-2 complete
 - 📋 **v1.0.0** - Phase 7 (Real-World Validation & Final Polish)
 
 ---
@@ -130,8 +130,8 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 **Status:** 🚀 In Progress - See [phase6-production-hardening.md](./implementation-plans/phase6-production-hardening.md)
 
 **Key Deliverables:**
-- ✅ Windows support (stdio cleanup fix, CI stability flags)
-- Complete assertion API (to_be_focused)
+- ✅ Windows support (stdio cleanup fix, CI stability flags) - Complete
+- ✅ Complete assertion API (to_be_focused) - Complete
 - Main document fulfillment investigation
 - Documentation completeness (rustdoc for all public APIs)
 - Examples covering all major features

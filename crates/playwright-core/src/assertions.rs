@@ -789,11 +789,59 @@ impl Expectation {
         }
     }
 
-    // NOTE: to_be_focused() is not implemented yet - Playwright doesn't expose isFocused() at the protocol level.
-    // The assertion exists in Playwright's test assertions API but requires implementing the 'expect'
-    // protocol command or properly handling evalOnSelector return values.
-    // See: https://playwright.dev/docs/test-assertions#locator-assertions-to-be-focused
-    // Deferred to future implementation (likely Phase 5 Slice 4+).
+    /// Asserts that the element is focused (currently has focus).
+    ///
+    /// This assertion will retry until the element becomes focused or timeout.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::{expect, protocol::Playwright};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let playwright = Playwright::launch().await?;
+    /// # let browser = playwright.chromium().launch().await?;
+    /// # let page = browser.new_page().await?;
+    /// expect(page.locator("input").await).to_be_focused().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-focused>
+    pub async fn to_be_focused(self) -> Result<()> {
+        let start = std::time::Instant::now();
+        let selector = self.locator.selector().to_string();
+
+        loop {
+            let is_focused = self.locator.is_focused().await?;
+
+            // Check if condition matches (with negation support)
+            let matches = if self.negate { !is_focused } else { is_focused };
+
+            if matches {
+                return Ok(());
+            }
+
+            // Check timeout
+            if start.elapsed() >= self.timeout {
+                let message = if self.negate {
+                    format!(
+                        "Expected element '{}' NOT to be focused, but it was focused after {:?}",
+                        selector, self.timeout
+                    )
+                } else {
+                    format!(
+                        "Expected element '{}' to be focused, but it was not focused after {:?}",
+                        selector, self.timeout
+                    )
+                };
+                return Err(crate::error::Error::AssertionTimeout(message));
+            }
+
+            // Wait before next poll
+            tokio::time::sleep(self.poll_interval).await;
+        }
+    }
 }
 
 #[cfg(test)]

@@ -363,7 +363,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - ✅ Text assertions (`to_have_text()`, `to_contain_text()`)
 - ✅ Value assertions (`to_have_value()`)
 - ✅ Regex pattern support for all text/value assertions
-- ✅ State assertions (`to_be_enabled()`, `to_be_disabled()`, `to_be_checked()`, `to_be_unchecked()`, `to_be_editable()`)
+- ✅ State assertions (`to_be_enabled()`, `to_be_disabled()`, `to_be_checked()`, `to_be_unchecked()`, `to_be_editable()`, `to_be_focused()`)
 - ✅ Network route registration (`page.route()` with async closure handlers)
 - ✅ Route interception (`route.abort()`, `route.continue()`)
 - ✅ Request data access in route handlers (`route.request().url()`, `method()`)

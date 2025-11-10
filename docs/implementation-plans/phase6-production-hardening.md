@@ -60,7 +60,6 @@
 ## Phase 6 Slices
 
 ### Slice 1: Windows Support and Stdio Cleanup ✅ COMPLETE
-### Slice 1: Windows Support and Stdio Cleanup ✅ COMPLETE
 
 **Goal:** Fix Windows integration test hangs and enable full Windows CI support.
 
@@ -80,32 +79,17 @@
 
 ---
 
-### Slice 2: to_be_focused() Assertion
+### Slice 2: to_be_focused() Assertion ✅ COMPLETE
 
 **Goal:** Implement the deferred `to_be_focused()` assertion.
 
-**Why Second:** Complete assertion API coverage, important for form testing.
+**Completion Date:** 2025-11-10
 
-**Research:**
-- Check if Playwright added 'expect' protocol command (check protocol.yml)
-- Review playwright-python implementation of to_be_focused()
-- Determine if we can use JavaScript evaluation as workaround
+**Problem:** Playwright doesn't expose `isFocused()` at the protocol level, requiring a workaround.
 
-**Tasks:**
-- [ ] Research Playwright protocol for focus detection
-- [ ] Write failing tests for to_be_focused() and not().to_be_focused()
-- [ ] Implement focus detection (protocol or JS eval)
-- [ ] Verify cross-browser (Chromium, Firefox, WebKit)
-- [ ] Add rustdoc with examples
+**Solution:** Implemented using JavaScript evaluation to check `document.activeElement === element`, which works across all browsers.
 
-**Files to Create/Modify:**
-- `crates/playwright-core/src/assertions.rs` - Implement to_be_focused()
-- `crates/playwright-core/tests/state_assertions_test.rs` - Uncomment deferred tests
-
-**Success Criteria:**
-- to_be_focused() works on all browsers
-- Tests pass for focused and unfocused elements
-- API matches Playwright exactly
+**Key Insight:** The Playwright protocol wraps JavaScript return values in typed objects (`{"b": true}` for booleans), requiring proper parsing in the protocol layer.
 
 ---
 

@@ -511,9 +511,46 @@ impl Frame {
         Ok(response.value)
     }
 
-    // NOTE: is_focused() is not implemented - Playwright doesn't expose isFocused() at the protocol level.
-    // The to_be_focused() assertion exists in test assertions API but requires implementing the 'expect'
-    // protocol command or properly handling evalOnSelector return values. Deferred to future implementation.
+    /// Returns whether the element is focused (currently has focus).
+    ///
+    /// This implementation checks if the element is the activeElement in the DOM
+    /// using JavaScript evaluation, since Playwright doesn't expose isFocused() at
+    /// the protocol level.
+    pub(crate) async fn locator_is_focused(&self, selector: &str) -> Result<bool> {
+        #[derive(Deserialize)]
+        struct EvaluateResult {
+            value: serde_json::Value,
+        }
+
+        // Use JavaScript to check if the element is the active element
+        // The script queries the DOM and returns true/false
+        let script = r#"selector => {
+                const elements = document.querySelectorAll(selector);
+                if (elements.length === 0) return false;
+                const element = elements[0];
+                return document.activeElement === element;
+            }"#;
+
+        let params = serde_json::json!({
+            "expression": script,
+            "arg": {
+                "value": {"s": selector},
+                "handles": []
+            }
+        });
+
+        let result: EvaluateResult = self.channel().send("evaluateExpression", params).await?;
+
+        // Playwright protocol returns booleans as {"b": true} or {"b": false}
+        if let serde_json::Value::Object(map) = &result.value {
+            if let Some(b) = map.get("b").and_then(|v| v.as_bool()) {
+                return Ok(b);
+            }
+        }
+
+        // Fallback: check if the string representation is "true"
+        Ok(result.value.to_string().to_lowercase().contains("true"))
+    }
 
     // Action delegate methods
 

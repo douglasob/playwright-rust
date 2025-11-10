@@ -147,7 +147,12 @@ impl Locator {
         self.frame.locator_is_editable(&self.selector).await
     }
 
-    // NOTE: is_focused() is not implemented - see Frame for explanation
+    /// Returns whether the element is focused (currently has focus).
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-is-focused>
+    pub async fn is_focused(&self) -> Result<bool> {
+        self.frame.locator_is_focused(&self.selector).await
+    }
 
     // Action methods
 

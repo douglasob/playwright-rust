@@ -391,17 +391,10 @@ async fn test_not_to_be_editable() {
     server.shutdown();
 }
 
-// NOTE: to_be_focused() tests are not included - the assertion is deferred to future implementation
-// because Playwright doesn't expose isFocused() at the protocol level. Requires implementing the
-// 'expect' protocol command or properly handling evalOnSelector return values.
-
-//  ============================================================================
-// Cross-browser tests
+// ============================================================================
+// to_be_focused() tests (Phase 6 Slice 2)
 // ============================================================================
 
-// Removed test_to_be_focused() and test_not_to_be_focused() - deferred
-
-/* DEFERRED
 #[tokio::test]
 async fn test_to_be_focused() {
     let server = TestServer::start().await;
@@ -483,7 +476,54 @@ async fn test_not_to_be_focused() {
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
-*/
+
+#[tokio::test]
+async fn test_to_be_focused_with_auto_retry() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .chromium()
+        .launch()
+        .await
+        .expect("Failed to launch browser");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Create an input that becomes focused after delay
+    page.evaluate(
+        r#"
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'delayed-focused-input';
+        document.body.appendChild(input);
+
+        setTimeout(() => {
+            input.focus();
+        }, 100);
+        "#,
+    )
+    .await
+    .expect("Failed to inject script");
+
+    // Test: Should wait for input to become focused
+    let input = page.locator("#delayed-focused-input").await;
+    expect(input)
+        .to_be_focused()
+        .await
+        .expect("Input should eventually be focused");
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+//  ============================================================================
+// Cross-browser tests
+// ============================================================================
 
 #[tokio::test]
 async fn test_to_be_enabled_firefox() {
@@ -584,6 +624,86 @@ async fn test_to_be_editable_webkit() {
     let input = page.locator("#webkit-input").await;
     expect(input)
         .to_be_editable()
+        .await
+        .expect("Should work in WebKit");
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+#[tokio::test]
+async fn test_to_be_focused_firefox() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .firefox()
+        .launch()
+        .await
+        .expect("Failed to launch Firefox");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Create and focus an input
+    page.evaluate(
+        r#"
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'firefox-focused-input';
+        document.body.appendChild(input);
+        input.focus();
+        "#,
+    )
+    .await
+    .expect("Failed to inject script");
+
+    let input = page.locator("#firefox-focused-input").await;
+    expect(input)
+        .to_be_focused()
+        .await
+        .expect("Should work in Firefox");
+
+    browser.close().await.expect("Failed to close browser");
+    server.shutdown();
+}
+
+#[tokio::test]
+async fn test_to_be_focused_webkit() {
+    let server = TestServer::start().await;
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let browser = playwright
+        .webkit()
+        .launch()
+        .await
+        .expect("Failed to launch WebKit");
+    let page = browser.new_page().await.expect("Failed to create page");
+
+    page.goto(&format!("{}/", server.url()), None)
+        .await
+        .expect("Failed to navigate");
+
+    // Create and focus an input
+    page.evaluate(
+        r#"
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'webkit-focused-input';
+        document.body.appendChild(input);
+        input.focus();
+        "#,
+    )
+    .await
+    .expect("Failed to inject script");
+
+    let input = page.locator("#webkit-focused-input").await;
+    expect(input)
+        .to_be_focused()
         .await
         .expect("Should work in WebKit");
 
