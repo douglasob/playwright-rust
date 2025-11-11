@@ -8,6 +8,11 @@
 // - wait_until option behavior
 // - Descriptive error messages
 // - Cross-browser compatibility
+//
+// Performance Optimization (Phase 6):
+// - Combined related tests to minimize browser launches
+// - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
+// - Expected speedup: ~67% (9 tests → 3 tests)
 
 mod test_server;
 
@@ -15,8 +20,13 @@ use playwright_core::protocol::{GotoOptions, Playwright, WaitUntil};
 use std::time::Duration;
 use test_server::TestServer;
 
+// ============================================================================
+// Navigation Error Methods
+// ============================================================================
+
 #[tokio::test]
-async fn test_goto_timeout_error() {
+async fn test_navigation_error_methods() {
+    let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -27,13 +37,10 @@ async fn test_goto_timeout_error() {
         .expect("Failed to launch browser");
     let page = browser.new_page().await.expect("Failed to create page");
 
-    // Test: goto() should fail with very short timeout on slow/unresponsive server
-    // Using a URL that will definitely timeout (non-routable IP)
+    // Test 1: goto() timeout error with non-routable IP
     let options = GotoOptions::new().timeout(Duration::from_millis(100));
-
     let result = page.goto("http://10.255.255.1:9999/", Some(options)).await;
 
-    // Should error due to timeout
     assert!(result.is_err(), "Expected timeout error");
 
     // Error message should be descriptive
@@ -44,25 +51,10 @@ async fn test_goto_timeout_error() {
         error_msg
     );
 
-    browser.close().await.expect("Failed to close browser");
-}
+    println!("✓ Timeout error with descriptive message");
 
-#[tokio::test]
-async fn test_goto_with_valid_timeout() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    // Test: goto() should succeed with reasonable timeout
+    // Test 2: goto() with valid timeout should succeed
     let options = GotoOptions::new().timeout(Duration::from_secs(10));
-
     let result = page
         .goto(&format!("{}/locators.html", server.url()), Some(options))
         .await;
@@ -72,63 +64,38 @@ async fn test_goto_with_valid_timeout() {
         "Navigation should succeed with valid timeout"
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Navigation with valid timeout succeeds");
 
-#[tokio::test]
-async fn test_goto_invalid_url() {
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    // Test: goto() should fail with invalid URL
+    // Test 3: goto() with invalid URL should error
     let result = page.goto("not-a-valid-url", None).await;
-
     assert!(result.is_err(), "Expected error for invalid URL");
 
-    browser.close().await.expect("Failed to close browser");
-}
+    println!("✓ Invalid URL produces error");
 
-#[tokio::test]
-async fn test_reload_timeout_error() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    // First navigate to a valid page
+    // Test 4: reload() with very short timeout
+    // First navigate back to valid page
     page.goto(&format!("{}/locators.html", server.url()), None)
         .await
-        .expect("Initial navigation should succeed");
+        .expect("Navigation should succeed");
 
-    // Now try to reload with an impossibly short timeout
     let options = GotoOptions::new().timeout(Duration::from_millis(1));
-
     let result = page.reload(Some(options)).await;
 
     // May or may not timeout depending on timing, but should not crash
-    // This test mainly verifies the timeout option is respected
-    let _ = result; // Don't assert on result since timing is unpredictable
+    let _ = result;
+
+    println!("✓ Reload with short timeout handled gracefully");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
 
+// ============================================================================
+// Wait Until Options
+// ============================================================================
+
 #[tokio::test]
-async fn test_wait_until_load() {
+async fn test_wait_until_options() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -140,9 +107,8 @@ async fn test_wait_until_load() {
         .expect("Failed to launch browser");
     let page = browser.new_page().await.expect("Failed to create page");
 
-    // Test: wait_until Load option
+    // Test 1: wait_until Load
     let options = GotoOptions::new().wait_until(WaitUntil::Load);
-
     let result = page
         .goto(&format!("{}/locators.html", server.url()), Some(options))
         .await;
@@ -152,26 +118,10 @@ async fn test_wait_until_load() {
         "Navigation with wait_until=Load should succeed"
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ wait_until=Load works");
 
-#[tokio::test]
-async fn test_wait_until_domcontentloaded() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    // Test: wait_until DomContentLoaded option
+    // Test 2: wait_until DomContentLoaded
     let options = GotoOptions::new().wait_until(WaitUntil::DomContentLoaded);
-
     let result = page
         .goto(&format!("{}/locators.html", server.url()), Some(options))
         .await;
@@ -181,26 +131,10 @@ async fn test_wait_until_domcontentloaded() {
         "Navigation with wait_until=DOMContentLoaded should succeed"
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ wait_until=DomContentLoaded works");
 
-#[tokio::test]
-async fn test_wait_until_networkidle() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    // Test: wait_until NetworkIdle option
+    // Test 3: wait_until NetworkIdle
     let options = GotoOptions::new().wait_until(WaitUntil::NetworkIdle);
-
     let result = page
         .goto(&format!("{}/locators.html", server.url()), Some(options))
         .await;
@@ -210,50 +144,61 @@ async fn test_wait_until_networkidle() {
         "Navigation with wait_until=NetworkIdle should succeed"
     );
 
+    println!("✓ wait_until=NetworkIdle works");
+
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
 
-// Cross-browser tests
+// ============================================================================
+// Cross-browser Smoke Test
+// ============================================================================
 
 #[tokio::test]
-async fn test_timeout_error_firefox() {
+async fn test_cross_browser_smoke() {
+    // Smoke test to verify navigation errors work in Firefox and WebKit
+    // (Rust bindings use the same protocol layer for all browsers,
+    //  so we don't need exhaustive cross-browser testing for each method)
+
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
-    let browser = playwright
+
+    // Test Firefox
+    let firefox = playwright
         .firefox()
         .launch()
         .await
         .expect("Failed to launch Firefox");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let firefox_page = firefox.new_page().await.expect("Failed to create page");
 
     let options = GotoOptions::new().timeout(Duration::from_millis(100));
-
-    let result = page.goto("http://10.255.255.1:9999/", Some(options)).await;
+    let result = firefox_page
+        .goto("http://10.255.255.1:9999/", Some(options))
+        .await;
 
     assert!(result.is_err(), "Expected timeout error in Firefox");
 
-    browser.close().await.expect("Failed to close browser");
-}
+    println!("✓ Firefox timeout error works");
 
-#[tokio::test]
-async fn test_timeout_error_webkit() {
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
+    firefox.close().await.expect("Failed to close Firefox");
+
+    // Test WebKit
+    let webkit = playwright
         .webkit()
         .launch()
         .await
         .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let webkit_page = webkit.new_page().await.expect("Failed to create page");
 
     let options = GotoOptions::new().timeout(Duration::from_millis(100));
-
-    let result = page.goto("http://10.255.255.1:9999/", Some(options)).await;
+    let result = webkit_page
+        .goto("http://10.255.255.1:9999/", Some(options))
+        .await;
 
     assert!(result.is_err(), "Expected timeout error in WebKit");
 
-    browser.close().await.expect("Failed to close browser");
+    println!("✓ WebKit timeout error works");
+
+    webkit.close().await.expect("Failed to close WebKit");
 }

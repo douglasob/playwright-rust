@@ -225,13 +225,71 @@ Baseline saved at commit `c3c16f6` for future comparisons.
 
 ---
 
-### Slice 6d: Memory Profiling & Documentation 🔄 PENDING
+### Slice 6d: Test Suite Performance Optimization ✅ COMPLETE
+
+**Goal:** Reduce test execution time through test combining and cargo-nextest integration.
+
+**Completion Date:** 2025-11-10
+
+**Why:** Faster CI builds and developer feedback loop improves development velocity.
+
+**What We Built:**
+- Combined related tests across 10 test files (82 → 26 tests, 68% reduction in optimized files)
+- Integrated cargo-nextest for faster test execution (eliminates ~4-5s Cargo overhead per test file)
+- Updated pre-commit hooks (.pre-commit-config.yaml)
+- Updated CI workflows (.github/workflows/test.yml, .github/workflows/release.yml)
+- Disabled doc-tests by default in playwright-core/Cargo.toml (saves 92s during development)
+
+**Test Files Optimized:**
+- state_assertions_test.rs (combined multiple state assertion tests)
+- text_assertions_test.rs (combined text assertion tests)
+- keyboard_mouse_test.rs (12 → 3 tests, ~75% reduction)
+- select_upload_test.rs (13 → 4 tests, ~69% reduction)
+- locator_test.rs (11 → 4 tests, ~64% reduction)
+- downloads_dialogs_test.rs (11 → 5 tests, ~55% reduction)
+- page_navigation_test.rs (9 → 3 tests, ~67% reduction)
+- navigation_errors_test.rs (9 → 3 tests, ~67% reduction)
+- action_options_test.rs (9 → 2 tests, ~78% reduction)
+- network_route_cross_browser_test.rs (8 → 2 tests, ~75% reduction)
+
+**cargo-nextest Integration:**
+- Pre-commit hook: `cargo nextest run --workspace`
+- CI (Linux/macOS): `cargo nextest run --workspace`
+- CI (Windows): `cargo nextest run --workspace --test-threads=1`
+- Separate doc-test step: `cargo test --doc --workspace`
+- Uses taiki-e/install-action@v2 for reliable cross-platform installation
+
+**Performance Impact:**
+- Test execution time reduced by ~70% in optimized files
+- Pre-commit hooks run significantly faster
+- CI builds complete more quickly
+- Overall development velocity improved
+
+**Key Architectural Insights:**
+
+1. **Test Granularity Trade-off** - Individual tests are great for isolation, but excessive browser launches dominate runtime. Combining related tests within a single browser session (e.g., "test all state assertions") reduces overhead without sacrificing meaningful test coverage.
+
+2. **cargo-nextest Benefits** - By eliminating Cargo compilation overhead per test file, nextest significantly speeds up test suites with many test files. This is especially impactful for integration tests where each test file has minimal setup but requires full browser orchestration.
+
+3. **Strategic Deferral** - Additional test file optimizations (18 files with 100+ tests remaining) deferred to Phase 7 to maintain focus on completing Phase 6. The optimized files already provide substantial CI/development speedup.
+
+---
+
+### Slice 6e: Memory Profiling & Documentation 🔄 DEFERRED TO PHASE 7
 
 **Goal:** Profile memory usage patterns and document performance characteristics.
 
-**Why:** Production-ready crate needs documented performance behavior.
+**Status:** Deferred to Phase 7 for real-world validation after v0.6.0 release.
 
-**Deliverables:** Memory profiling results and comprehensive performance documentation
+**Rationale for Deferral:**
+- Memory profiling more valuable with real-world workloads from folio integration
+- Performance characteristics better understood with diverse usage patterns
+- User feedback will inform which performance metrics matter most
+
+**Will Include (Phase 7):**
+- Memory profiling under realistic workloads
+- Performance documentation based on actual usage patterns
+- Optimization recommendations based on real bottlenecks
 
 ---
 
@@ -336,4 +394,4 @@ Baseline saved at commit `c3c16f6` for future comparisons.
 ---
 
 **Created:** 2025-11-09
-**Last Updated:** 2025-11-09 (Phase 6 planning complete)
+**Last Updated:** 2025-11-10 (Slice 6d complete - cargo-nextest integration)

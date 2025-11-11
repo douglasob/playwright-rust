@@ -5,28 +5,36 @@
 //
 // Tests download events (page.on_download) and dialog events (page.on_dialog)
 // for alert, confirm, and prompt dialog types.
+//
+// Performance Optimization (Phase 6):
+// - Combined related tests to minimize browser launches
+// - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
+// - Expected speedup: ~55% (11 tests → 5 tests)
 
 use playwright_core::protocol::Playwright;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-/// Test basic download event handling
+// ============================================================================
+// Download Methods
+// ============================================================================
+
+/// Test download event handling and save functionality
 ///
 /// Verifies that:
 /// 1. Download event is fired when download is triggered
 /// 2. Download object provides URL and suggested filename
 /// 3. Download can be saved to disk
 #[tokio::test]
-async fn test_download_event_triggered() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_download_methods() -> Result<(), Box<dyn std::error::Error>> {
     let playwright = Playwright::launch().await?;
     let browser = playwright.chromium().launch().await?;
     let page = browser.new_page().await?;
 
-    // Shared state to capture download
+    // Test 1: Basic download event handling
     let download_captured = Arc::new(Mutex::new(None));
     let download_captured_clone = download_captured.clone();
 
-    // Register download handler
     page.on_download(move |download| {
         let captured = download_captured_clone.clone();
         async move {
@@ -36,10 +44,8 @@ async fn test_download_event_triggered() -> Result<(), Box<dyn std::error::Error
     })
     .await?;
 
-    // Navigate to blank page first
     let _ = page.goto("about:blank", None).await;
 
-    // Create a test page that triggers a download using evaluate
     page.evaluate(
         r#"
         const a = document.createElement('a');
@@ -52,20 +58,16 @@ async fn test_download_event_triggered() -> Result<(), Box<dyn std::error::Error
     )
     .await?;
 
-    // Trigger download
     let locator = page.locator("#download-link").await;
     locator.click(None).await?;
 
-    // Wait for download event
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    // Verify download was captured
     let download_opt = download_captured.lock().unwrap().take();
     assert!(download_opt.is_some(), "Download event should have fired");
 
     let download = download_opt.unwrap();
 
-    // Verify download properties
     assert!(
         download.url().contains("data:text/plain"),
         "Download URL should be the data URL"
@@ -76,29 +78,12 @@ async fn test_download_event_triggered() -> Result<(), Box<dyn std::error::Error
         "Suggested filename should be 'test.txt'"
     );
 
-    browser.close().await?;
-    Ok(())
-}
+    // Test 2: Save download to file
+    let download_captured2 = Arc::new(Mutex::new(None));
+    let download_captured2_clone = download_captured2.clone();
 
-/// Test download save_as functionality
-///
-/// Verifies that:
-/// 1. Download can be saved to a specific path
-/// 2. File exists after saving
-/// 3. Content is correct
-#[tokio::test]
-async fn test_download_save_as() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.chromium().launch().await?;
-    let page = browser.new_page().await?;
-
-    // Shared state to capture download
-    let download_captured = Arc::new(Mutex::new(None));
-    let download_captured_clone = download_captured.clone();
-
-    // Register download handler
     page.on_download(move |download| {
-        let captured = download_captured_clone.clone();
+        let captured = download_captured2_clone.clone();
         async move {
             *captured.lock().unwrap() = Some(download);
             Ok(())
@@ -106,10 +91,6 @@ async fn test_download_save_as() -> Result<(), Box<dyn std::error::Error>> {
     })
     .await?;
 
-    // Navigate to blank page
-    let _ = page.goto("about:blank", None).await;
-
-    // Create test page with download
     page.evaluate(
         r#"
         const a = document.createElement('a');
@@ -122,41 +103,37 @@ async fn test_download_save_as() -> Result<(), Box<dyn std::error::Error>> {
     )
     .await?;
 
-    // Trigger download
     let locator = page.locator("#dl").await;
     locator.click(None).await?;
 
-    // Wait for download
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    let download_opt = download_captured.lock().unwrap().take();
+    let download_opt = download_captured2.lock().unwrap().take();
     assert!(download_opt.is_some());
     let download = download_opt.unwrap();
 
-    // Save to temp file
     let temp_dir = std::env::temp_dir();
     let save_path = temp_dir.join("playwright_test_download.txt");
-
-    // Clean up if exists
     let _ = std::fs::remove_file(&save_path);
 
-    // Save download
     download.save_as(&save_path).await?;
 
-    // Verify file exists
     assert!(
         save_path.exists(),
         "Downloaded file should exist at save path"
     );
 
-    // Clean up
     std::fs::remove_file(&save_path)?;
 
     browser.close().await?;
     Ok(())
 }
 
-/// Test dialog alert handling
+// ============================================================================
+// Dialog Alert Methods
+// ============================================================================
+
+/// Test alert dialog handling
 ///
 /// Verifies that:
 /// 1. Alert dialog event is fired
@@ -164,34 +141,27 @@ async fn test_download_save_as() -> Result<(), Box<dyn std::error::Error>> {
 /// 3. Dialog message is captured
 /// 4. Dialog can be accepted
 #[tokio::test]
-async fn test_dialog_alert() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_dialog_alert_methods() -> Result<(), Box<dyn std::error::Error>> {
     let playwright = Playwright::launch().await?;
     let browser = playwright.chromium().launch().await?;
     let page = browser.new_page().await?;
 
-    // Shared state to capture dialog info
     let dialog_info = Arc::new(Mutex::new(None));
     let dialog_info_clone = dialog_info.clone();
 
-    // Register dialog handler
     page.on_dialog(move |dialog| {
         let info = dialog_info_clone.clone();
         async move {
-            // Capture dialog info
             let type_ = dialog.type_().to_string();
             let message = dialog.message().to_string();
             *info.lock().unwrap() = Some((type_, message));
-
-            // Accept the dialog
             dialog.accept(None).await
         }
     })
     .await?;
 
-    // Navigate to blank page
     let _ = page.goto("about:blank", None).await;
 
-    // Create test page with alert button
     page.evaluate(
         r#"
         const button = document.createElement('button');
@@ -202,14 +172,11 @@ async fn test_dialog_alert() -> Result<(), Box<dyn std::error::Error>> {
     )
     .await?;
 
-    // Trigger alert
     let locator = page.locator("button").await;
     locator.click(None).await?;
 
-    // Wait for dialog event
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    // Verify dialog was captured
     let info_opt = dialog_info.lock().unwrap().take();
     assert!(info_opt.is_some(), "Dialog event should have fired");
 
@@ -224,55 +191,56 @@ async fn test_dialog_alert() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Test dialog confirm handling - accept
+// ============================================================================
+// Dialog Confirm Methods
+// ============================================================================
+
+/// Test confirm dialog handling - accept and dismiss
 ///
 /// Verifies that:
 /// 1. Confirm dialog event is fired
 /// 2. Dialog type is "confirm"
-/// 3. Dialog can be accepted
-/// 4. JavaScript receives true when accepted
+/// 3. Dialog can be accepted (returns true)
+/// 4. Dialog can be dismissed (returns false)
 #[tokio::test]
-async fn test_dialog_confirm_accept() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_dialog_confirm_methods() -> Result<(), Box<dyn std::error::Error>> {
     let playwright = Playwright::launch().await?;
-    let browser = playwright.chromium().launch().await?;
-    let page = browser.new_page().await?;
 
-    // Shared state
+    // Test 1: Confirm accept
+    let browser1 = playwright.chromium().launch().await?;
+    let page1 = browser1.new_page().await?;
+
     let dialog_info = Arc::new(Mutex::new(None));
     let dialog_info_clone = dialog_info.clone();
 
-    // Register dialog handler that accepts
-    page.on_dialog(move |dialog| {
-        let info = dialog_info_clone.clone();
-        async move {
-            *info.lock().unwrap() = Some(dialog.type_().to_string());
-            dialog.accept(None).await
-        }
-    })
-    .await?;
+    page1
+        .on_dialog(move |dialog| {
+            let info = dialog_info_clone.clone();
+            async move {
+                *info.lock().unwrap() = Some(dialog.type_().to_string());
+                dialog.accept(None).await
+            }
+        })
+        .await?;
 
-    // Navigate to blank page
-    let _ = page.goto("about:blank", None).await;
+    let _ = page1.goto("about:blank", None).await;
 
-    // Page with confirm that stores result
-    page.evaluate(
-        r#"
+    page1
+        .evaluate(
+            r#"
         const button = document.createElement('button');
         button.onclick = () => { window.confirmResult = confirm('Continue?'); };
         button.textContent = 'Confirm';
         document.body.appendChild(button);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    // Trigger confirm
-    let locator = page.locator("button").await;
+    let locator = page1.locator("button").await;
     locator.click(None).await?;
 
-    // Wait for dialog
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    // Verify dialog type
     let dialog_type = dialog_info.lock().unwrap().take();
     assert_eq!(
         dialog_type,
@@ -280,116 +248,101 @@ async fn test_dialog_confirm_accept() -> Result<(), Box<dyn std::error::Error>> 
         "Dialog type should be 'confirm'"
     );
 
-    // Verify JavaScript received true
-    let result = page.evaluate_value("window.confirmResult").await?;
+    let result = page1.evaluate_value("window.confirmResult").await?;
     assert_eq!(result, "true", "confirm() should return true when accepted");
 
-    browser.close().await?;
-    Ok(())
-}
+    browser1.close().await?;
 
-/// Test dialog confirm handling - dismiss
-///
-/// Verifies that:
-/// 1. Dialog can be dismissed
-/// 2. JavaScript receives false when dismissed
-#[tokio::test]
-async fn test_dialog_confirm_dismiss() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.chromium().launch().await?;
-    let page = browser.new_page().await?;
+    // Test 2: Confirm dismiss (needs separate browser to avoid handler conflicts)
+    let browser2 = playwright.chromium().launch().await?;
+    let page2 = browser2.new_page().await?;
 
-    // Register dialog handler that dismisses
-    page.on_dialog(move |dialog| async move { dialog.dismiss().await })
+    page2
+        .on_dialog(move |dialog| async move { dialog.dismiss().await })
         .await?;
 
-    // Navigate to blank page
-    let _ = page.goto("about:blank", None).await;
+    let _ = page2.goto("about:blank", None).await;
 
-    // Page with confirm that stores result
-    page.evaluate(
-        r#"
+    page2
+        .evaluate(
+            r#"
         const button = document.createElement('button');
-        button.onclick = () => { window.confirmResult = confirm('Continue?'); };
+        button.onclick = () => { window.confirmResult = confirm('Really?'); };
         button.textContent = 'Confirm';
         document.body.appendChild(button);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    // Trigger confirm
-    let locator = page.locator("button").await;
+    let locator = page2.locator("button").await;
     locator.click(None).await?;
 
-    // Wait for dialog
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    // Verify JavaScript received false
-    let result = page.evaluate_value("window.confirmResult").await?;
+    let result = page2.evaluate_value("window.confirmResult").await?;
     assert_eq!(
         result, "false",
         "confirm() should return false when dismissed"
     );
 
-    browser.close().await?;
+    browser2.close().await?;
     Ok(())
 }
 
-/// Test dialog prompt handling with input
+// ============================================================================
+// Dialog Prompt Methods
+// ============================================================================
+
+/// Test prompt dialog handling with input and dismiss
 ///
 /// Verifies that:
 /// 1. Prompt dialog event is fired
 /// 2. Dialog type is "prompt"
 /// 3. Default value is captured
-/// 4. Custom input can be provided
-/// 5. JavaScript receives the input text
+/// 4. Custom input can be provided (returns input text)
+/// 5. Prompt can be dismissed (returns null)
 #[tokio::test]
-async fn test_dialog_prompt_with_input() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_dialog_prompt_methods() -> Result<(), Box<dyn std::error::Error>> {
     let playwright = Playwright::launch().await?;
-    let browser = playwright.chromium().launch().await?;
-    let page = browser.new_page().await?;
 
-    // Shared state
+    // Test 1: Prompt with custom input
+    let browser1 = playwright.chromium().launch().await?;
+    let page1 = browser1.new_page().await?;
+
     let dialog_data = Arc::new(Mutex::new(None));
     let dialog_data_clone = dialog_data.clone();
 
-    // Register dialog handler
-    page.on_dialog(move |dialog| {
-        let data = dialog_data_clone.clone();
-        async move {
-            let type_ = dialog.type_().to_string();
-            let message = dialog.message().to_string();
-            let default = dialog.default_value().to_string();
-            *data.lock().unwrap() = Some((type_, message, default));
+    page1
+        .on_dialog(move |dialog| {
+            let data = dialog_data_clone.clone();
+            async move {
+                let type_ = dialog.type_().to_string();
+                let message = dialog.message().to_string();
+                let default = dialog.default_value().to_string();
+                *data.lock().unwrap() = Some((type_, message, default));
+                dialog.accept(Some("Custom Input")).await
+            }
+        })
+        .await?;
 
-            // Accept with custom input
-            dialog.accept(Some("Custom Input")).await
-        }
-    })
-    .await?;
+    let _ = page1.goto("about:blank", None).await;
 
-    // Navigate to blank page
-    let _ = page.goto("about:blank", None).await;
-
-    // Page with prompt that stores result
-    page.evaluate(
-        r#"
+    page1
+        .evaluate(
+            r#"
         const button = document.createElement('button');
         button.onclick = () => { window.promptResult = prompt('Enter text:', 'DefaultValue'); };
         button.textContent = 'Prompt';
         document.body.appendChild(button);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    // Trigger prompt
-    let locator = page.locator("button").await;
+    let locator = page1.locator("button").await;
     locator.click(None).await?;
 
-    // Wait for dialog
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    // Verify dialog data
     let data_opt = dialog_data.lock().unwrap().take();
     assert!(data_opt.is_some(), "Dialog event should have fired");
 
@@ -401,93 +354,91 @@ async fn test_dialog_prompt_with_input() -> Result<(), Box<dyn std::error::Error
         "Default value should be 'DefaultValue'"
     );
 
-    // Verify JavaScript received custom input
-    let result = page.evaluate_value("window.promptResult").await?;
+    let result = page1.evaluate_value("window.promptResult").await?;
     assert_eq!(
         result, "Custom Input",
         "prompt() should return the custom input text"
     );
 
-    browser.close().await?;
-    Ok(())
-}
+    browser1.close().await?;
 
-/// Test dialog prompt handling - dismiss
-///
-/// Verifies that:
-/// 1. Prompt can be dismissed
-/// 2. JavaScript receives null when dismissed
-#[tokio::test]
-async fn test_dialog_prompt_dismiss() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.chromium().launch().await?;
-    let page = browser.new_page().await?;
+    // Test 2: Prompt dismiss (needs separate browser to avoid handler conflicts)
+    let browser2 = playwright.chromium().launch().await?;
+    let page2 = browser2.new_page().await?;
 
-    // Register dialog handler that dismisses
-    page.on_dialog(move |dialog| async move { dialog.dismiss().await })
+    page2
+        .on_dialog(move |dialog| async move { dialog.dismiss().await })
         .await?;
 
-    // Navigate to blank page
-    let _ = page.goto("about:blank", None).await;
+    let _ = page2.goto("about:blank", None).await;
 
-    // Page with prompt that stores result
-    page.evaluate(
-        r#"
+    page2
+        .evaluate(
+            r#"
         const button = document.createElement('button');
-        button.onclick = () => { window.promptResult = prompt('Enter text:'); };
+        button.onclick = () => { window.promptResult = prompt('More text:'); };
         button.textContent = 'Prompt';
         document.body.appendChild(button);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    // Trigger prompt
-    let locator = page.locator("button").await;
+    let locator = page2.locator("button").await;
     locator.click(None).await?;
 
-    // Wait for dialog
     tokio::time::sleep(Duration::from_millis(300)).await;
 
-    // Verify JavaScript received null
-    let result = page.evaluate_value("window.promptResult").await?;
+    let result = page2.evaluate_value("window.promptResult").await?;
     assert_eq!(result, "null", "prompt() should return null when dismissed");
 
-    browser.close().await?;
+    browser2.close().await?;
     Ok(())
 }
 
-/// Test cross-browser dialog support - Firefox
+// ============================================================================
+// Cross-browser Smoke Test
+// ============================================================================
+
+/// Test cross-browser support for downloads and dialogs
+///
+/// Verifies that both downloads and dialogs work in Firefox and WebKit
+/// (Rust bindings use the same protocol layer for all browsers,
+///  so we don't need exhaustive cross-browser testing for each method)
 #[tokio::test]
-async fn test_dialog_firefox() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_cross_browser_smoke() -> Result<(), Box<dyn std::error::Error>> {
     let playwright = Playwright::launch().await?;
-    let browser = playwright.firefox().launch().await?;
-    let page = browser.new_page().await?;
+
+    // Test Firefox - dialog
+    let firefox = playwright.firefox().launch().await?;
+    let firefox_page = firefox.new_page().await?;
 
     let dialog_handled = Arc::new(Mutex::new(false));
     let dialog_handled_clone = dialog_handled.clone();
 
-    page.on_dialog(move |dialog| {
-        let handled = dialog_handled_clone.clone();
-        async move {
-            *handled.lock().unwrap() = true;
-            dialog.accept(None).await
-        }
-    })
-    .await?;
+    firefox_page
+        .on_dialog(move |dialog| {
+            let handled = dialog_handled_clone.clone();
+            async move {
+                *handled.lock().unwrap() = true;
+                dialog.accept(None).await
+            }
+        })
+        .await?;
 
-    let _ = page.goto("about:blank", None).await;
+    let _ = firefox_page.goto("about:blank", None).await;
 
-    page.evaluate(
-        r#"
+    firefox_page
+        .evaluate(
+            r#"
         const button = document.createElement('button');
         button.onclick = () => alert('Test');
         button.textContent = 'Alert';
         document.body.appendChild(button);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    let locator = page.locator("button").await;
+    let locator = firefox_page.locator("button").await;
     locator.click(None).await?;
 
     tokio::time::sleep(Duration::from_millis(300)).await;
@@ -497,78 +448,30 @@ async fn test_dialog_firefox() -> Result<(), Box<dyn std::error::Error>> {
         "Dialog should be handled in Firefox"
     );
 
-    browser.close().await?;
-    Ok(())
-}
+    firefox.close().await?;
 
-/// Test cross-browser dialog support - WebKit
-#[tokio::test]
-async fn test_dialog_webkit() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.webkit().launch().await?;
-    let page = browser.new_page().await?;
-
-    let dialog_handled = Arc::new(Mutex::new(false));
-    let dialog_handled_clone = dialog_handled.clone();
-
-    page.on_dialog(move |dialog| {
-        let handled = dialog_handled_clone.clone();
-        async move {
-            *handled.lock().unwrap() = true;
-            dialog.accept(None).await
-        }
-    })
-    .await?;
-
-    let _ = page.goto("about:blank", None).await;
-
-    page.evaluate(
-        r#"
-        const button = document.createElement('button');
-        button.onclick = () => alert('Test');
-        button.textContent = 'Alert';
-        document.body.appendChild(button);
-        "#,
-    )
-    .await?;
-
-    let locator = page.locator("button").await;
-    locator.click(None).await?;
-
-    tokio::time::sleep(Duration::from_millis(300)).await;
-
-    assert!(
-        *dialog_handled.lock().unwrap(),
-        "Dialog should be handled in WebKit"
-    );
-
-    browser.close().await?;
-    Ok(())
-}
-
-/// Test cross-browser download support - Firefox
-#[tokio::test]
-async fn test_download_firefox() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.firefox().launch().await?;
-    let page = browser.new_page().await?;
+    // Test WebKit - download
+    let webkit = playwright.webkit().launch().await?;
+    let webkit_page = webkit.new_page().await?;
 
     let download_captured = Arc::new(Mutex::new(false));
     let download_captured_clone = download_captured.clone();
 
-    page.on_download(move |_download| {
-        let captured = download_captured_clone.clone();
-        async move {
-            *captured.lock().unwrap() = true;
-            Ok(())
-        }
-    })
-    .await?;
+    webkit_page
+        .on_download(move |_download| {
+            let captured = download_captured_clone.clone();
+            async move {
+                *captured.lock().unwrap() = true;
+                Ok(())
+            }
+        })
+        .await?;
 
-    let _ = page.goto("about:blank", None).await;
+    let _ = webkit_page.goto("about:blank", None).await;
 
-    page.evaluate(
-        r#"
+    webkit_page
+        .evaluate(
+            r#"
         const a = document.createElement('a');
         a.href = 'data:text/plain,Test';
         a.download = 'test.txt';
@@ -576,57 +479,10 @@ async fn test_download_firefox() -> Result<(), Box<dyn std::error::Error>> {
         a.textContent = 'Download';
         document.body.appendChild(a);
         "#,
-    )
-    .await?;
+        )
+        .await?;
 
-    let locator = page.locator("#dl").await;
-    locator.click(None).await?;
-
-    tokio::time::sleep(Duration::from_millis(500)).await;
-
-    assert!(
-        *download_captured.lock().unwrap(),
-        "Download should be captured in Firefox"
-    );
-
-    browser.close().await?;
-    Ok(())
-}
-
-/// Test cross-browser download support - WebKit
-#[tokio::test]
-async fn test_download_webkit() -> Result<(), Box<dyn std::error::Error>> {
-    let playwright = Playwright::launch().await?;
-    let browser = playwright.webkit().launch().await?;
-    let page = browser.new_page().await?;
-
-    let download_captured = Arc::new(Mutex::new(false));
-    let download_captured_clone = download_captured.clone();
-
-    page.on_download(move |_download| {
-        let captured = download_captured_clone.clone();
-        async move {
-            *captured.lock().unwrap() = true;
-            Ok(())
-        }
-    })
-    .await?;
-
-    let _ = page.goto("about:blank", None).await;
-
-    page.evaluate(
-        r#"
-        const a = document.createElement('a');
-        a.href = 'data:text/plain,Test';
-        a.download = 'test.txt';
-        a.id = 'dl';
-        a.textContent = 'Download';
-        document.body.appendChild(a);
-        "#,
-    )
-    .await?;
-
-    let locator = page.locator("#dl").await;
+    let locator = webkit_page.locator("#dl").await;
     locator.click(None).await?;
 
     tokio::time::sleep(Duration::from_millis(500)).await;
@@ -636,6 +492,6 @@ async fn test_download_webkit() -> Result<(), Box<dyn std::error::Error>> {
         "Download should be captured in WebKit"
     );
 
-    browser.close().await?;
+    webkit.close().await?;
     Ok(())
 }

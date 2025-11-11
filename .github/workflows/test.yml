@@ -67,6 +67,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-playwright-browsers-1.56.1-
 
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-nextest
+
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
@@ -93,12 +98,15 @@ jobs:
 
     - name: Run tests (Linux/macOS)
       if: runner.os != 'Windows'
-      run: cargo test --verbose --workspace
+      run: cargo nextest run --workspace
 
     - name: Run tests (Windows)
       if: runner.os == 'Windows'
       timeout-minutes: 30
-      run: cargo test --verbose --workspace -- --test-threads=1
+      run: cargo nextest run --workspace --test-threads=1
+
+    - name: Run doc-tests
+      run: cargo test --doc --workspace
 
     - name: Build all examples
       run: cargo build --package playwright --examples

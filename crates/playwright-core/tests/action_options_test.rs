@@ -12,7 +12,10 @@
 // - Mouse options (button, click_count, delay, steps)
 // - Cross-browser compatibility
 //
-// Note: Tests are combined where possible to reduce browser launches
+// Performance Optimization (Phase 6):
+// - Combined related tests to minimize browser launches
+// - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
+// - Expected speedup: ~78% (9 tests → 2 tests)
 
 mod test_server;
 
@@ -23,8 +26,12 @@ use playwright_core::protocol::action_options::{
 use playwright_core::protocol::{MouseButton, Playwright, Position};
 use test_server::TestServer;
 
+// ============================================================================
+// Action Options Methods
+// ============================================================================
+
 #[tokio::test]
-async fn test_fill_with_options() {
+async fn test_action_options_methods() {
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -36,11 +43,11 @@ async fn test_fill_with_options() {
         .expect("Failed to launch browser");
     let page = browser.new_page().await.expect("Failed to create page");
 
+    // Test 1: Fill with force option
     page.goto(&format!("{}/input.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test fill with force option
     let input = page.locator("#input").await;
     let options = FillOptions::builder().force(true).build();
     input
@@ -51,28 +58,13 @@ async fn test_fill_with_options() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "Hello World");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Fill with force option works");
 
-#[tokio::test]
-async fn test_press_with_delay() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 2: Press with delay option
     page.goto(&format!("{}/keyboard.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Press with delay option
     let input = page.locator("#input").await;
     input.click(None).await.expect("Failed to click");
 
@@ -85,28 +77,13 @@ async fn test_press_with_delay() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "submitted");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Press with delay option works");
 
-#[tokio::test]
-async fn test_check_with_options() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 3: Check with force and trial options
     page.goto(&format!("{}/checkbox.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test check with force option
     let checkbox = page.locator("#checkbox").await;
     let options = CheckOptions::builder().force(true).build();
     checkbox
@@ -119,7 +96,6 @@ async fn test_check_with_options() {
         "Checkbox should be checked"
     );
 
-    // Test uncheck with trial option (dry-run)
     let checked_checkbox = page.locator("#checked-checkbox").await;
     let trial_options = CheckOptions::builder().trial(true).build();
     checked_checkbox
@@ -127,34 +103,18 @@ async fn test_check_with_options() {
         .await
         .expect("Failed to trial uncheck");
 
-    // Trial should not actually uncheck
     assert!(
         checked_checkbox.is_checked().await.unwrap(),
         "Trial uncheck should not actually uncheck"
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Check with force and trial options work");
 
-#[tokio::test]
-async fn test_hover_with_options() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 4: Hover with position option
     page.goto(&format!("{}/hover.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Hover with position option
     let button = page.locator("#hover-button").await;
     let options = HoverOptions::builder()
         .position(Position { x: 5.0, y: 5.0 })
@@ -164,35 +124,19 @@ async fn test_hover_with_options() {
         .await
         .expect("Failed to hover with position");
 
-    // Tooltip should be visible after hover
     let tooltip = page.locator("#tooltip").await;
     assert!(
         tooltip.is_visible().await.unwrap(),
         "Tooltip should be visible after hover"
     );
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Hover with position option works");
 
-#[tokio::test]
-async fn test_select_with_options() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 5: Select with force option
     page.goto(&format!("{}/select.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Select with force option
     let select = page.locator("#single-select").await;
     let options = SelectOptions::builder().force(true).build();
     let selected = select
@@ -202,28 +146,13 @@ async fn test_select_with_options() {
 
     assert_eq!(selected, vec!["apple"]);
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Select with force option works");
 
-#[tokio::test]
-async fn test_keyboard_with_delay() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
+    // Test 6: Keyboard type with delay option
     page.goto(&format!("{}/keyboard_mouse.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Type with delay
     let input = page.locator("#keyboard-input").await;
     input.click(None).await.expect("Failed to click input");
 
@@ -237,28 +166,9 @@ async fn test_keyboard_with_delay() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "Hello");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Keyboard type with delay option works");
 
-#[tokio::test]
-async fn test_mouse_with_options() {
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
-        .chromium()
-        .launch()
-        .await
-        .expect("Failed to launch browser");
-    let page = browser.new_page().await.expect("Failed to create page");
-
-    page.goto(&format!("{}/keyboard_mouse.html", server.url()), None)
-        .await
-        .expect("Failed to navigate");
-
-    // Click with mouse options
+    // Test 7: Mouse click with options
     let mouse = page.mouse();
     let options = MouseOptions::builder()
         .button(MouseButton::Left)
@@ -269,7 +179,6 @@ async fn test_mouse_with_options() {
         .await
         .expect("Failed to click with options");
 
-    // Verify click was registered
     let result = page
         .locator("#mouse-result")
         .await
@@ -278,74 +187,81 @@ async fn test_mouse_with_options() {
         .unwrap();
     assert_eq!(result, "Clicked");
 
+    println!("✓ Mouse click with options works");
+
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
 }
 
+// ============================================================================
+// Cross-browser Smoke Test
+// ============================================================================
+
 #[tokio::test]
-async fn test_action_options_firefox() {
-    // Cross-browser test: Firefox
+async fn test_cross_browser_smoke() {
+    // Smoke test to verify action options work in Firefox and WebKit
+    // (Rust bindings use the same protocol layer for all browsers,
+    //  so we don't need exhaustive cross-browser testing for each method)
+
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
-    let browser = playwright
+
+    // Test Firefox - fill with options
+    let firefox = playwright
         .firefox()
         .launch()
         .await
         .expect("Failed to launch Firefox");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let firefox_page = firefox.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/input.html", server.url()), None)
+    firefox_page
+        .goto(&format!("{}/input.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test fill with force option in Firefox
-    let input = page.locator("#input").await;
+    let firefox_input = firefox_page.locator("#input").await;
     let options = FillOptions::builder().force(true).build();
-    input
+    firefox_input
         .fill("Firefox Test", Some(options))
         .await
         .expect("Failed to fill in Firefox");
 
-    let value = input.input_value(None).await.unwrap();
+    let value = firefox_input.input_value(None).await.unwrap();
     assert_eq!(value, "Firefox Test");
 
-    browser.close().await.expect("Failed to close browser");
-    server.shutdown();
-}
+    println!("✓ Firefox action options work");
 
-#[tokio::test]
-async fn test_action_options_webkit() {
-    // Cross-browser test: WebKit
-    let server = TestServer::start().await;
-    let playwright = Playwright::launch()
-        .await
-        .expect("Failed to launch Playwright");
-    let browser = playwright
+    firefox.close().await.expect("Failed to close Firefox");
+
+    // Test WebKit - check with options
+    let webkit = playwright
         .webkit()
         .launch()
         .await
         .expect("Failed to launch WebKit");
-    let page = browser.new_page().await.expect("Failed to create page");
+    let webkit_page = webkit.new_page().await.expect("Failed to create page");
 
-    page.goto(&format!("{}/checkbox.html", server.url()), None)
+    webkit_page
+        .goto(&format!("{}/checkbox.html", server.url()), None)
         .await
         .expect("Failed to navigate");
 
-    // Test check with options in WebKit
-    let checkbox = page.locator("#checkbox").await;
+    let webkit_checkbox = webkit_page.locator("#checkbox").await;
     let options = CheckOptions::builder().force(true).build();
-    checkbox
+    webkit_checkbox
         .check(Some(options))
         .await
         .expect("Failed to check in WebKit");
 
     assert!(
-        checkbox.is_checked().await.unwrap(),
+        webkit_checkbox.is_checked().await.unwrap(),
         "Checkbox should be checked in WebKit"
     );
 
-    browser.close().await.expect("Failed to close browser");
+    println!("✓ WebKit action options work");
+
+    webkit.close().await.expect("Failed to close WebKit");
     server.shutdown();
 }

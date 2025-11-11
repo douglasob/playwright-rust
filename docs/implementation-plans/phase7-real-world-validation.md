@@ -44,6 +44,7 @@ This feedback-driven approach ensures we're solving real problems, not theoretic
    - May include deferred items from Phase 6 if they prove important:
      - GUID string optimization
      - Transport chunked reading
+     - Optimize tests (similar to Phase 6, Slice 6d)
 
 3. **API Enhancements** (Based on user requests)
    - FilePayload struct (if users need it)

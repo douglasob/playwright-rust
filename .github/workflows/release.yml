@@ -99,8 +99,13 @@ jobs:
           npm install -g @playwright/test
           npx playwright install chromium
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Run tests
-        run: cargo test --workspace --target ${{ matrix.target }}
+        run: cargo nextest run --workspace --target ${{ matrix.target }}
 
       - name: Build release binary (if CLI exists)
         run: cargo build --release --target ${{ matrix.target }} --verbose
