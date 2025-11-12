@@ -385,6 +385,32 @@ impl Locator {
             .await
     }
 
+    /// Sets a file to upload using FilePayload (explicit name, mimeType, buffer).
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-set-input-files>
+    pub async fn set_input_files_payload(
+        &self,
+        file: crate::protocol::FilePayload,
+        _options: Option<()>,
+    ) -> Result<()> {
+        self.frame
+            .locator_set_input_files_payload(&self.selector, file)
+            .await
+    }
+
+    /// Sets multiple files to upload using FilePayload.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-locator#locator-set-input-files>
+    pub async fn set_input_files_payload_multiple(
+        &self,
+        files: &[crate::protocol::FilePayload],
+        _options: Option<()>,
+    ) -> Result<()> {
+        self.frame
+            .locator_set_input_files_payload_multiple(&self.selector, files)
+            .await
+    }
+
     /// Takes a screenshot of the element and returns the image bytes.
     ///
     /// This method uses strict mode - it will fail if the selector matches multiple elements.

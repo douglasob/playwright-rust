@@ -20,6 +20,7 @@ pub mod click;
 pub mod dialog;
 pub mod download;
 pub mod element_handle;
+pub mod file_payload;
 pub mod frame;
 pub mod keyboard;
 pub mod locator;
@@ -38,12 +39,15 @@ pub use action_options::{
     SelectOptions,
 };
 pub use browser::Browser;
-pub use browser_context::BrowserContext;
+pub use browser_context::{
+    BrowserContext, BrowserContextOptions, BrowserContextOptionsBuilder, Geolocation, Viewport,
+};
 pub use browser_type::BrowserType;
 pub use click::{ClickOptions, KeyboardModifier, MouseButton, Position};
 pub use dialog::Dialog;
 pub use download::Download;
 pub use element_handle::ElementHandle;
+pub use file_payload::{FilePayload, FilePayloadBuilder};
 pub use frame::Frame;
 pub use keyboard::Keyboard;
 pub use locator::Locator;
@@ -53,6 +57,8 @@ pub use playwright::Playwright;
 pub use request::Request;
 pub use response::ResponseObject;
 pub use root::Root;
-pub use route::{ContinueOptions, FulfillOptions, FulfillOptionsBuilder, Route};
+pub use route::{
+    ContinueOptions, ContinueOptionsBuilder, FulfillOptions, FulfillOptionsBuilder, Route,
+};
 pub use screenshot::{ScreenshotClip, ScreenshotOptions, ScreenshotType};
 pub use select_option::SelectOption;

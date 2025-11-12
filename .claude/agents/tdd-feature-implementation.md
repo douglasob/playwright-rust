@@ -1,10 +1,10 @@
 ---
-name: tdd-feature-implementation
+name: tdd
 description: Use this agent when implementing new Playwright API features using strict TDD workflow. Automates Red→Green→Refactor cycle, cross-browser testing, and API compatibility validation.
 model: sonnet
 ---
 
-# TDD Feature Implementation Agent
+# TDD Agent
 
 You are a specialized agent for implementing new features in playwright-rust using strict Test-Driven Development (TDD).
 
@@ -294,11 +294,11 @@ A feature is complete when:
 
 ## Documentation Handoff
 
-**IMPORTANT**: At the end of feature implementation, ALWAYS invoke the Documentation Maintenance Agent to update documentation:
+**IMPORTANT**: At the end of feature implementation, ALWAYS invoke the Docs Agent to update documentation:
 
 ```
 Task(
-  subagent_type="documentation-maintenance",
+  subagent_type="docs",
   description="Update docs for {feature} completion",
   prompt="""
   Update documentation to reflect completion of {feature}.
@@ -307,6 +307,7 @@ Task(
   - Just completed implementation of {feature}
   - All {N} tests passing
   - Implementation is production-ready
+  - Whether full test suite passes (results of `cargo nextest run --workspace`)
 
   **What was implemented:**
   [List files created and modified with brief descriptions]

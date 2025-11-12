@@ -136,9 +136,11 @@ This roadmap outlines the path to a production-ready `playwright-rust` library. 
 - ✅ Documentation completeness (rustdoc for all public APIs) - Complete (100% coverage)
 - ✅ Performance optimization (benchmark suite, GUID Arc<str> optimization, chunked reading) - Complete
 - ✅ Test suite optimization (cargo-nextest integration, test combining) - Complete
+- ✅ Stability testing (memory leaks, resource cleanup, error handling) - Complete
+- ✅ Low-priority enhancements (FilePayload, BrowserContext options, route continue overrides) - Complete
 - 🔄 Examples and migration guide - Deferred to Phase 7 for real-world feedback
-- 🔄 Memory profiling documentation - Pending
-- 🔄 Stability testing (memory leaks, resource cleanup) - Pending
+- 🔄 Memory profiling documentation - Deferred to Phase 7
+- 🔄 Doctest infrastructure - Pending
 - 🔄 v0.6.0 published to crates.io - Pending
 
 ---
@@ -253,4 +255,4 @@ Implementation plans are created when the previous phase is ~80% complete, allow
 
 ---
 
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-12

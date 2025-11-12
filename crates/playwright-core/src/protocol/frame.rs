@@ -966,6 +966,82 @@ impl Frame {
             .await
     }
 
+    pub(crate) async fn locator_set_input_files_payload(
+        &self,
+        selector: &str,
+        file: crate::protocol::FilePayload,
+    ) -> Result<()> {
+        use base64::{engine::general_purpose, Engine as _};
+
+        // Base64 encode the file contents
+        let base64_content = general_purpose::STANDARD.encode(&file.buffer);
+
+        self.channel()
+            .send_no_result(
+                "setInputFiles",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true,
+                    "timeout": crate::DEFAULT_TIMEOUT_MS,
+                    "payloads": [{
+                        "name": file.name,
+                        "mimeType": file.mime_type,
+                        "buffer": base64_content
+                    }]
+                }),
+            )
+            .await
+    }
+
+    pub(crate) async fn locator_set_input_files_payload_multiple(
+        &self,
+        selector: &str,
+        files: &[crate::protocol::FilePayload],
+    ) -> Result<()> {
+        use base64::{engine::general_purpose, Engine as _};
+
+        // If empty array, clear the files
+        if files.is_empty() {
+            return self
+                .channel()
+                .send_no_result(
+                    "setInputFiles",
+                    serde_json::json!({
+                        "selector": selector,
+                        "strict": true,
+                        "timeout": crate::DEFAULT_TIMEOUT_MS,
+                        "payloads": []
+                    }),
+                )
+                .await;
+        }
+
+        // Encode each file
+        let file_objects: Vec<_> = files
+            .iter()
+            .map(|file| {
+                let base64_content = general_purpose::STANDARD.encode(&file.buffer);
+                serde_json::json!({
+                    "name": file.name,
+                    "mimeType": file.mime_type,
+                    "buffer": base64_content
+                })
+            })
+            .collect();
+
+        self.channel()
+            .send_no_result(
+                "setInputFiles",
+                serde_json::json!({
+                    "selector": selector,
+                    "strict": true,
+                    "timeout": crate::DEFAULT_TIMEOUT_MS,
+                    "payloads": file_objects
+                }),
+            )
+            .await
+    }
+
     /// Evaluates JavaScript expression in the frame context (without return value).
     ///
     /// This is used internally by Page.evaluate().

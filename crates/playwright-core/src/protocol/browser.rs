@@ -213,6 +213,94 @@ impl Browser {
         Ok(context.clone())
     }
 
+    /// Creates a new browser context with custom options.
+    ///
+    /// A browser context is an isolated session within the browser instance,
+    /// similar to an incognito profile. Each context has its own cookies,
+    /// cache, and local storage.
+    ///
+    /// This method allows customizing viewport, user agent, locale, timezone,
+    /// and other settings.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::{Playwright, BrowserContextOptions, Viewport};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    ///
+    /// // Create context with custom options
+    /// let options = BrowserContextOptions::builder()
+    ///     .viewport(Viewport { width: 1024, height: 768 })
+    ///     .locale("fr-FR".to_string())
+    ///     .user_agent("CustomBot/1.0".to_string())
+    ///     .build();
+    ///
+    /// let context = browser.new_context_with_options(options).await?;
+    ///
+    /// // Do work with context...
+    ///
+    /// // Cleanup
+    /// context.close().await?;
+    /// browser.close().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Browser has been closed
+    /// - Communication with browser process fails
+    /// - Invalid options provided
+    ///
+    /// See: <https://playwright.dev/docs/api/class-browser#browser-new-context>
+    pub async fn new_context_with_options(
+        &self,
+        options: crate::protocol::BrowserContextOptions,
+    ) -> Result<BrowserContext> {
+        // Response contains the GUID of the created BrowserContext
+        #[derive(Deserialize)]
+        struct NewContextResponse {
+            context: GuidRef,
+        }
+
+        #[derive(Deserialize)]
+        struct GuidRef {
+            #[serde(deserialize_with = "crate::connection::deserialize_arc_str")]
+            guid: Arc<str>,
+        }
+
+        // Convert options to JSON
+        let options_json = serde_json::to_value(options).map_err(|e| {
+            crate::error::Error::ProtocolError(format!(
+                "Failed to serialize context options: {}",
+                e
+            ))
+        })?;
+
+        // Send newContext RPC to server with options
+        let response: NewContextResponse = self.channel().send("newContext", options_json).await?;
+
+        // Retrieve the BrowserContext object from the connection registry
+        let context_arc = self.connection().get_object(&response.context.guid).await?;
+
+        // Downcast to BrowserContext
+        let context = context_arc
+            .as_any()
+            .downcast_ref::<BrowserContext>()
+            .ok_or_else(|| {
+                crate::error::Error::ProtocolError(format!(
+                    "Expected BrowserContext object, got {}",
+                    context_arc.type_name()
+                ))
+            })?;
+
+        Ok(context.clone())
+    }
+
     /// Creates a new page in a new browser context.
     ///
     /// This is a convenience method that creates a default context and then

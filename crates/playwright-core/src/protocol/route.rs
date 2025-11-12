@@ -121,13 +121,68 @@ impl Route {
     ///
     /// * `overrides` - Optional modifications to apply to the request
     ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use playwright_core::protocol::{Playwright, ContinueOptions};
+    /// # use std::collections::HashMap;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let playwright = Playwright::launch().await?;
+    /// let browser = playwright.chromium().launch().await?;
+    /// let page = browser.new_page().await?;
+    ///
+    /// // Modify headers when continuing route
+    /// page.route("**/*", |route| async move {
+    ///     let mut headers = HashMap::new();
+    ///     headers.insert("X-Custom-Header".to_string(), "value".to_string());
+    ///
+    ///     let options = ContinueOptions::builder()
+    ///         .headers(headers)
+    ///         .build();
+    ///
+    ///     route.continue_(Some(options)).await
+    /// }).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     /// See: <https://playwright.dev/docs/api/class-route#route-continue>
-    pub async fn continue_(&self, _overrides: Option<ContinueOptions>) -> Result<()> {
-        // For now, just continue without modifications
-        // TODO: Support overrides in future implementation
-        let params = json!({
+    pub async fn continue_(&self, overrides: Option<ContinueOptions>) -> Result<()> {
+        let mut params = json!({
             "isFallback": false
         });
+
+        // Add overrides if provided
+        if let Some(opts) = overrides {
+            // Add headers
+            if let Some(headers) = opts.headers {
+                let headers_array: Vec<serde_json::Value> = headers
+                    .into_iter()
+                    .map(|(name, value)| json!({"name": name, "value": value}))
+                    .collect();
+                params["headers"] = json!(headers_array);
+            }
+
+            // Add method
+            if let Some(method) = opts.method {
+                params["method"] = json!(method);
+            }
+
+            // Add postData (string or binary)
+            if let Some(post_data) = opts.post_data {
+                params["postData"] = json!(post_data);
+            } else if let Some(post_data_bytes) = opts.post_data_bytes {
+                use base64::Engine;
+                let encoded = base64::engine::general_purpose::STANDARD.encode(&post_data_bytes);
+                params["postData"] = json!(encoded);
+            }
+
+            // Add URL
+            if let Some(url) = opts.url {
+                params["url"] = json!(url);
+            }
+        }
 
         self.channel()
             .send::<_, serde_json::Value>("continue", params)
@@ -241,14 +296,98 @@ impl Route {
 
 /// Options for continuing a request with modifications.
 ///
+/// Allows modifying headers, method, post data, and URL when continuing a route.
+///
+/// # Example
+///
+/// ```no_run
+/// # use playwright_core::protocol::ContinueOptions;
+/// # use std::collections::HashMap;
+/// let mut headers = HashMap::new();
+/// headers.insert("X-Custom".to_string(), "value".to_string());
+///
+/// let options = ContinueOptions::builder()
+///     .headers(headers)
+///     .method("POST".to_string())
+///     .post_data("key=value".to_string())
+///     .build();
+/// ```
+///
 /// See: <https://playwright.dev/docs/api/class-route#route-continue>
 #[derive(Debug, Clone, Default)]
 pub struct ContinueOptions {
-    // TODO: Add fields for request modifications
-    // pub headers: Option<HashMap<String, String>>,
-    // pub method: Option<String>,
-    // pub post_data: Option<Vec<u8>>,
-    // pub url: Option<String>,
+    /// Modified request headers
+    pub headers: Option<std::collections::HashMap<String, String>>,
+    /// Modified request method (GET, POST, etc.)
+    pub method: Option<String>,
+    /// Modified POST data as string
+    pub post_data: Option<String>,
+    /// Modified POST data as bytes
+    pub post_data_bytes: Option<Vec<u8>>,
+    /// Modified request URL (must have same protocol)
+    pub url: Option<String>,
+}
+
+impl ContinueOptions {
+    /// Creates a new builder for ContinueOptions
+    pub fn builder() -> ContinueOptionsBuilder {
+        ContinueOptionsBuilder::default()
+    }
+}
+
+/// Builder for ContinueOptions
+#[derive(Debug, Clone, Default)]
+pub struct ContinueOptionsBuilder {
+    headers: Option<std::collections::HashMap<String, String>>,
+    method: Option<String>,
+    post_data: Option<String>,
+    post_data_bytes: Option<Vec<u8>>,
+    url: Option<String>,
+}
+
+impl ContinueOptionsBuilder {
+    /// Sets the request headers
+    pub fn headers(mut self, headers: std::collections::HashMap<String, String>) -> Self {
+        self.headers = Some(headers);
+        self
+    }
+
+    /// Sets the request method
+    pub fn method(mut self, method: String) -> Self {
+        self.method = Some(method);
+        self
+    }
+
+    /// Sets the POST data as a string
+    pub fn post_data(mut self, post_data: String) -> Self {
+        self.post_data = Some(post_data);
+        self.post_data_bytes = None; // Clear bytes if setting string
+        self
+    }
+
+    /// Sets the POST data as bytes
+    pub fn post_data_bytes(mut self, post_data_bytes: Vec<u8>) -> Self {
+        self.post_data_bytes = Some(post_data_bytes);
+        self.post_data = None; // Clear string if setting bytes
+        self
+    }
+
+    /// Sets the request URL (must have same protocol as original)
+    pub fn url(mut self, url: String) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    /// Builds the ContinueOptions
+    pub fn build(self) -> ContinueOptions {
+        ContinueOptions {
+            headers: self.headers,
+            method: self.method,
+            post_data: self.post_data,
+            post_data_bytes: self.post_data_bytes,
+            url: self.url,
+        }
+    }
 }
 
 /// Options for fulfilling a route with a custom response.
