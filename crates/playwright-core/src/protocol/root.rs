@@ -35,23 +35,26 @@ use std::sync::Arc;
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// # use playwright_core::protocol::Root;
 /// # use playwright_core::connection::ConnectionLike;
 /// # use std::sync::Arc;
 /// # async fn example(connection: Arc<dyn ConnectionLike>) -> Result<(), Box<dyn std::error::Error>> {
-/// // Create root object
-/// let root = Root::new(connection);
+/// // Create root object with connection
+/// let root = Root::new(connection.clone());
 ///
-/// // Send initialize and get response
+/// // Send initialize message to server
 /// let response = root.initialize().await?;
 ///
-/// // Extract Playwright GUID
+/// // Verify Playwright GUID is returned
 /// let playwright_guid = response["playwright"]["guid"]
 ///     .as_str()
 ///     .expect("Missing playwright.guid");
+/// assert!(!playwright_guid.is_empty());
+/// assert!(playwright_guid.contains("playwright"));
 ///
-/// println!("Playwright GUID: {}", playwright_guid);
+/// // Verify response contains BrowserType objects
+/// assert!(response["playwright"].is_object());
 /// # Ok(())
 /// # }
 /// ```
@@ -70,17 +73,6 @@ impl Root {
     /// # Arguments
     ///
     /// * `connection` - The connection to the Playwright server
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Root;
-    /// # use playwright_core::connection::ConnectionLike;
-    /// # use std::sync::Arc;
-    /// # fn example(connection: Arc<dyn ConnectionLike>) {
-    /// let root = Root::new(connection);
-    /// # }
-    /// ```
     pub fn new(connection: Arc<dyn ConnectionLike>) -> Self {
         Self {
             base: ChannelOwnerImpl::new(
@@ -115,20 +107,6 @@ impl Root {
     /// - Message send fails
     /// - Server returns protocol error
     /// - Connection is closed
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Root;
-    /// # use playwright_core::connection::ConnectionLike;
-    /// # use std::sync::Arc;
-    /// # async fn example(connection: Arc<dyn ConnectionLike>) -> Result<(), Box<dyn std::error::Error>> {
-    /// let root = Root::new(connection);
-    /// let response = root.initialize().await?;
-    /// println!("Response: {:?}", response);
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn initialize(&self) -> Result<Value> {
         self.channel()
             .send(

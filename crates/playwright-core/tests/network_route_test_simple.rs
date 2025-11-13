@@ -74,7 +74,8 @@ async fn test_route_continue() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(
         response.status(),

@@ -25,26 +25,100 @@ use std::sync::{Arc, Mutex, RwLock};
 ///
 /// # Example
 ///
-/// ```no_run
-/// # use playwright_core::protocol::Playwright;
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let playwright = Playwright::launch().await?;
-/// let browser = playwright.chromium().launch().await?;
-/// let context = browser.new_context().await?;
+/// ```ignore
+/// use playwright_core::protocol::{Playwright, ScreenshotOptions, ScreenshotType};
+/// use std::path::PathBuf;
 ///
-/// // Create a page
-/// let page = context.new_page().await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let playwright = Playwright::launch().await?;
+///     let browser = playwright.chromium().launch().await?;
+///     let page = browser.new_page().await?;
 ///
-/// // Page starts at about:blank
-/// assert_eq!(page.url(), "about:blank");
+///     // Demonstrate url() - initially at about:blank
+///     assert_eq!(page.url(), "about:blank");
 ///
-/// // Cleanup
-/// page.close().await?;
-/// context.close().await?;
-/// browser.close().await?;
-/// # Ok(())
-/// # }
+///     // Demonstrate goto() - navigate to a page
+///     let html = r#"
+///         <html>
+///             <head><title>Test Page</title></head>
+///             <body>
+///                 <h1 id="heading">Hello World</h1>
+///                 <p>First paragraph</p>
+///                 <p>Second paragraph</p>
+///                 <button onclick="alert('Alert!')">Alert</button>
+///                 <a href="data:text/plain,file" download="test.txt">Download</a>
+///             </body>
+///         </html>
+///     "#;
+///     // Data URLs may not return a response (this is normal)
+///     let _response = page.goto(&format!("data:text/html,{}", html), None).await?;
+///
+///     // Demonstrate title()
+///     let title = page.title().await?;
+///     assert_eq!(title, "Test Page");
+///
+///     // Demonstrate locator()
+///     let heading = page.locator("#heading").await;
+///     let text = heading.text_content().await?;
+///     assert_eq!(text, Some("Hello World".to_string()));
+///
+///     // Demonstrate query_selector()
+///     let element = page.query_selector("h1").await?;
+///     assert!(element.is_some(), "Should find the h1 element");
+///
+///     // Demonstrate query_selector_all()
+///     let paragraphs = page.query_selector_all("p").await?;
+///     assert_eq!(paragraphs.len(), 2);
+///
+///     // Demonstrate evaluate()
+///     page.evaluate("console.log('Hello from Playwright!')").await?;
+///
+///     // Demonstrate evaluate_value()
+///     let result = page.evaluate_value("1 + 1").await?;
+///     assert_eq!(result, "2");
+///
+///     // Demonstrate screenshot()
+///     let bytes = page.screenshot(None).await?;
+///     assert!(!bytes.is_empty());
+///
+///     // Demonstrate screenshot_to_file()
+///     let temp_dir = std::env::temp_dir();
+///     let path = temp_dir.join("playwright_doctest_screenshot.png");
+///     let bytes = page.screenshot_to_file(&path, Some(
+///         ScreenshotOptions::builder()
+///             .screenshot_type(ScreenshotType::Png)
+///             .build()
+///     )).await?;
+///     assert!(!bytes.is_empty());
+///
+///     // Demonstrate reload()
+///     // Data URLs may not return a response on reload (this is normal)
+///     let _response = page.reload(None).await?;
+///
+///     // Demonstrate route() - network interception
+///     page.route("**/*.png", |route| async move {
+///         route.abort(None).await
+///     }).await?;
+///
+///     // Demonstrate on_download() - download handler
+///     page.on_download(|download| async move {
+///         println!("Download started: {}", download.url());
+///         Ok(())
+///     }).await?;
+///
+///     // Demonstrate on_dialog() - dialog handler
+///     page.on_dialog(|dialog| async move {
+///         println!("Dialog: {} - {}", dialog.type_(), dialog.message());
+///         dialog.accept(None).await
+///     }).await?;
+///
+///     // Demonstrate close()
+///     page.close().await?;
+///
+///     browser.close().await?;
+///     Ok(())
+/// }
 /// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-page>
@@ -175,25 +249,6 @@ impl Page {
     ///
     /// This returns the last committed URL. Initially, pages are at "about:blank".
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// // Initially at about:blank
-    /// assert_eq!(page.url(), "about:blank");
-    ///
-    /// // After navigation (Phase 3)
-    /// // page.goto("https://example.com").await?;
-    /// // assert_eq!(page.url(), "https://example.com/");
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-url>
     pub fn url(&self) -> String {
         // Return a clone of the current URL
@@ -204,24 +259,6 @@ impl Page {
     ///
     /// This is a graceful operation that sends a close command to the page
     /// and waits for it to shut down properly.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Do work with page...
-    ///
-    /// // Close page when done
-    /// page.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -239,27 +276,13 @@ impl Page {
 
     /// Navigates to the specified URL.
     ///
+    /// Returns `None` when navigating to URLs that don't produce responses (e.g., data URLs,
+    /// about:blank). This matches Playwright's behavior across all language bindings.
+    ///
     /// # Arguments
     ///
     /// * `url` - The URL to navigate to
     /// * `options` - Optional navigation options (timeout, wait_until)
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// // Navigate to URL
-    /// let response = page.goto("https://example.com", None).await?;
-    /// assert!(response.ok);
-    /// assert_eq!(page.url(), "https://example.com/");
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -269,7 +292,7 @@ impl Page {
     /// - Network error
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-goto>
-    pub async fn goto(&self, url: &str, options: Option<GotoOptions>) -> Result<Response> {
+    pub async fn goto(&self, url: &str, options: Option<GotoOptions>) -> Result<Option<Response>> {
         // Delegate to main frame
         let frame = self.main_frame().await.map_err(|e| match e {
             Error::TargetClosed { context, .. } => Error::TargetClosed {
@@ -287,31 +310,17 @@ impl Page {
             other => other,
         })?;
 
-        // Update the page's URL
-        if let Ok(mut page_url) = self.url.write() {
-            *page_url = response.url().to_string();
+        // Update the page's URL if we got a response
+        if let Some(ref resp) = response {
+            if let Ok(mut page_url) = self.url.write() {
+                *page_url = resp.url().to_string();
+            }
         }
 
         Ok(response)
     }
 
     /// Returns the page's title.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    /// let title = page.title().await?;
-    /// println!("Page title: {}", title);
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-title>
     pub async fn title(&self) -> Result<String> {
@@ -328,26 +337,6 @@ impl Page {
     /// # Arguments
     ///
     /// * `selector` - CSS selector or other locating strategy
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// // Create a locator
-    /// let heading = page.locator("h1").await;
-    ///
-    /// // Get text content (locator executes now)
-    /// let text = heading.text_content().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-locator>
     pub async fn locator(&self, selector: &str) -> crate::protocol::Locator {
@@ -574,24 +563,11 @@ impl Page {
     ///
     /// * `options` - Optional reload options (timeout, wait_until)
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    /// let response = page.reload(None).await?;
-    /// assert!(response.ok);
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// Returns `None` when reloading pages that don't produce responses (e.g., data URLs,
+    /// about:blank). This matches Playwright's behavior across all language bindings.
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-reload>
-    pub async fn reload(&self, options: Option<GotoOptions>) -> Result<Response> {
+    pub async fn reload(&self, options: Option<GotoOptions>) -> Result<Option<Response>> {
         // Build params
         let mut params = serde_json::json!({});
 
@@ -678,33 +654,15 @@ impl Page {
                 *page_url = response.url().to_string();
             }
 
-            Ok(response)
+            Ok(Some(response))
         } else {
-            Err(crate::error::Error::ProtocolError(
-                "Reload did not return a response".to_string(),
-            ))
+            // Reload returned null (e.g., data URLs, about:blank)
+            // This is a valid result, not an error
+            Ok(None)
         }
     }
 
     /// Returns the first element matching the selector, or None if not found.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// if let Some(element) = page.query_selector("h1").await? {
-    ///     let screenshot = element.screenshot(None).await?;
-    /// }
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-query-selector>
     pub async fn query_selector(
@@ -717,23 +675,6 @@ impl Page {
 
     /// Returns all elements matching the selector.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// let paragraphs = page.query_selector_all("p").await?;
-    /// println!("Found {} paragraphs", paragraphs.len());
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-query-selector-all>
     pub async fn query_selector_all(
         &self,
@@ -744,27 +685,6 @@ impl Page {
     }
 
     /// Takes a screenshot of the page and returns the image bytes.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// // Capture screenshot as bytes
-    /// let bytes = page.screenshot(None).await?;
-    /// assert!(!bytes.is_empty());
-    ///
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-screenshot>
     pub async fn screenshot(
@@ -800,29 +720,6 @@ impl Page {
 
     /// Takes a screenshot and saves it to a file, also returning the bytes.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # use std::path::PathBuf;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// // Save screenshot to file
-    /// let path = PathBuf::from("screenshot.png");
-    /// let bytes = page.screenshot_to_file(&path, None).await?;
-    /// assert!(path.exists());
-    ///
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-screenshot>
     pub async fn screenshot_to_file(
         &self,
@@ -845,35 +742,6 @@ impl Page {
     /// Executes the provided JavaScript expression or function within the page's
     /// context and returns the result. The return value must be JSON-serializable.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// // Execute JavaScript
-    /// page.evaluate("console.log('Hello from Playwright!')").await?;
-    ///
-    /// // Manipulate DOM
-    /// page.evaluate(
-    ///     r#"
-    ///     const div = document.createElement('div');
-    ///     div.id = 'my-element';
-    ///     document.body.appendChild(div);
-    ///     "#
-    /// ).await?;
-    ///
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-evaluate>
     pub async fn evaluate(&self, expression: &str) -> Result<()> {
         // Delegate to the main frame, matching playwright-python's behavior
@@ -891,27 +759,6 @@ impl Page {
     ///
     /// The result converted to a String
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// let result = page.evaluate_value("1 + 1").await?;
-    /// assert_eq!(result, "2");
-    ///
-    /// let text = page.evaluate_value("document.title").await?;
-    /// println!("Title: {}", text);
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-evaluate>
     pub async fn evaluate_value(&self, expression: &str) -> Result<String> {
         let frame = self.main_frame().await?;
@@ -927,26 +774,6 @@ impl Page {
     ///
     /// * `pattern` - URL pattern to match (supports glob patterns like "**/*.png")
     /// * `handler` - Async closure that handles the route
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Abort all image requests
-    /// page.route("**/*.png", |route| async move {
-    ///     route.abort(None).await
-    /// }).await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-route>
     pub async fn route<F, Fut>(&self, pattern: &str, handler: F) -> Result<()>
@@ -1045,27 +872,6 @@ impl Page {
     ///
     /// * `handler` - Async closure that receives the Download object
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Register download handler
-    /// page.on_download(|download| async move {
-    ///     println!("Download started: {}", download.url());
-    ///     download.save_as("/path/to/save/file").await
-    /// }).await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-page#page-event-download>
     pub async fn on_download<F, Fut>(&self, handler: F) -> Result<()>
     where
@@ -1091,32 +897,6 @@ impl Page {
     /// # Arguments
     ///
     /// * `handler` - Async closure that receives the Dialog object
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Register dialog handler
-    /// page.on_dialog(|dialog| async move {
-    ///     println!("Dialog: {} - {}", dialog.type_(), dialog.message());
-    ///     match dialog.type_() {
-    ///         "alert" => dialog.accept(None).await,
-    ///         "confirm" => dialog.accept(None).await,
-    ///         "prompt" => dialog.accept(Some("user input")).await,
-    ///         _ => dialog.dismiss().await,
-    ///     }
-    /// }).await?;
-    ///
-    /// page.goto("https://example.com", None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-event-dialog>
     pub async fn on_dialog<F, Fut>(&self, handler: F) -> Result<()>

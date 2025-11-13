@@ -82,7 +82,8 @@ async fn test_route_firefox_methods() {
     let response = page2
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(
         response.status(),
@@ -129,7 +130,8 @@ async fn test_route_firefox_methods() {
     let response = page3
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(response.status(), 200, "Should work in Firefox");
 
@@ -231,7 +233,8 @@ async fn test_route_webkit_methods() {
     let response = page2
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(
         response.status(),

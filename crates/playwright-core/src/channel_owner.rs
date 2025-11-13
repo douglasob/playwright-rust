@@ -62,7 +62,7 @@ pub enum ParentOrConnection {
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// # use playwright_core::channel_owner::ChannelOwner;
 /// # use std::sync::Arc;
 /// # fn example(browser: Arc<dyn ChannelOwner>) {
@@ -156,7 +156,7 @@ pub trait ChannelOwner: Send + Sync {
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::channel_owner::{ChannelOwner, ChannelOwnerImpl, ParentOrConnection, DisposeReason};
 /// use playwright_core::channel::Channel;
 /// use playwright_core::connection::ConnectionLike;

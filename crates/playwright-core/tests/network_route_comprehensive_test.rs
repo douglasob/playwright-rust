@@ -75,7 +75,8 @@ async fn test_route_continue_allows_fetch() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(
         response.status(),
@@ -272,7 +273,8 @@ async fn test_route_continue_webkit() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(response.status(), 200, "Should work in WebKit");
 

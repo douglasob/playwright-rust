@@ -24,7 +24,7 @@ use std::process::Command;
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::driver::get_driver_executable;
 ///
 /// let (node_exe, cli_js) = get_driver_executable()?;

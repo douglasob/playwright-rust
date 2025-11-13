@@ -22,24 +22,28 @@ use std::sync::Arc;
 ///
 /// # Example
 ///
-/// ```no_run
-/// # use playwright_core::protocol::Playwright;
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let playwright = Playwright::launch().await?;
-/// let browser = playwright.chromium().launch().await?;
+/// ```ignore
+/// use playwright_core::protocol::Playwright;
 ///
-/// // Create an isolated context
-/// let context = browser.new_context().await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let playwright = Playwright::launch().await?;
+///     let browser = playwright.chromium().launch().await?;
 ///
-/// // Context has its own session
-/// // ... create pages in context ...
+///     // Create isolated contexts
+///     let context1 = browser.new_context().await?;
+///     let context2 = browser.new_context().await?;
 ///
-/// // Cleanup
-/// context.close().await?;
-/// browser.close().await?;
-/// # Ok(())
-/// # }
+///     // Create pages in each context
+///     let page1 = context1.new_page().await?;
+///     let page2 = context2.new_page().await?;
+///
+///     // Cleanup
+///     context1.close().await?;
+///     context2.close().await?;
+///     browser.close().await?;
+///     Ok(())
+/// }
 /// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-browsercontext>
@@ -109,32 +113,6 @@ impl BrowserContext {
     /// Pages are isolated tabs/windows within a context. Each page starts
     /// at "about:blank" and can be navigated independently.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// let context = browser.new_context().await?;
-    ///
-    /// // Create pages in the context
-    /// let page1 = context.new_page().await?;
-    /// let page2 = context.new_page().await?;
-    ///
-    /// // Each page is isolated
-    /// assert_eq!(page1.url(), "about:blank");
-    /// assert_eq!(page2.url(), "about:blank");
-    ///
-    /// // Cleanup
-    /// page1.close().await?;
-    /// page2.close().await?;
-    /// context.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// # Errors
     ///
     /// Returns error if:
@@ -179,24 +157,6 @@ impl BrowserContext {
     ///
     /// This is a graceful operation that sends a close command to the context
     /// and waits for it to shut down properly.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// let context = browser.new_context().await?;
-    ///
-    /// // Do work with context...
-    ///
-    /// // Close context when done
-    /// context.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -353,26 +313,6 @@ pub struct Geolocation {
 ///
 /// Allows customizing viewport, user agent, locale, timezone, geolocation,
 /// permissions, and other browser context settings.
-///
-/// # Example
-///
-/// ```no_run
-/// # use playwright_core::protocol::{Playwright, BrowserContextOptions, Viewport};
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let playwright = Playwright::launch().await?;
-/// let browser = playwright.chromium().launch().await?;
-///
-/// let options = BrowserContextOptions::builder()
-///     .viewport(Viewport { width: 1024, height: 768 })
-///     .locale("fr-FR".to_string())
-///     .timezone_id("Europe/Paris".to_string())
-///     .build();
-///
-/// let context = browser.new_context_with_options(options).await?;
-/// # Ok(())
-/// # }
-/// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-browser#browser-new-context>
 #[derive(Debug, Clone, Default, Serialize)]

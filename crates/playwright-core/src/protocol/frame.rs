@@ -55,13 +55,16 @@ impl Frame {
     ///
     /// This is the actual protocol method for navigation. Page.goto() delegates to this.
     ///
+    /// Returns `None` when navigating to URLs that don't produce responses (e.g., data URLs,
+    /// about:blank). This matches Playwright's behavior across all language bindings.
+    ///
     /// # Arguments
     ///
     /// * `url` - The URL to navigate to
     /// * `options` - Optional navigation options (timeout, wait_until)
     ///
     /// See: <https://playwright.dev/docs/api/class-frame#frame-goto>
-    pub async fn goto(&self, url: &str, options: Option<GotoOptions>) -> Result<Response> {
+    pub async fn goto(&self, url: &str, options: Option<GotoOptions>) -> Result<Option<Response>> {
         // Build params manually using json! macro
         let mut params = serde_json::json!({
             "url": url,
@@ -143,7 +146,7 @@ impl Frame {
                 })
                 .collect();
 
-            Ok(Response {
+            Ok(Some(Response {
                 url: initializer["url"]
                     .as_str()
                     .ok_or_else(|| {
@@ -154,12 +157,11 @@ impl Frame {
                 status_text: initializer["statusText"].as_str().unwrap_or("").to_string(),
                 ok: (200..300).contains(&status), // Compute ok from status code
                 headers,
-            })
+            }))
         } else {
-            // Navigation returned null (e.g., about:blank or failed navigation)
-            Err(crate::error::Error::ProtocolError(
-                "Navigation did not return a response".to_string(),
-            ))
+            // Navigation returned null (e.g., data URLs, about:blank)
+            // This is a valid result, not an error
+            Ok(None)
         }
     }
 
@@ -177,24 +179,6 @@ impl Frame {
     }
 
     /// Returns the first element matching the selector, or None if not found.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// if let Some(element) = page.query_selector("h1").await? {
-    ///     let screenshot = element.screenshot(None).await?;
-    /// }
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-frame#frame-query-selector>
     pub async fn query_selector(
@@ -255,23 +239,6 @@ impl Frame {
     }
 
     /// Returns all elements matching the selector.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// let paragraphs = page.query_selector_all("p").await?;
-    /// println!("Found {} paragraphs", paragraphs.len());
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-frame#frame-query-selector-all>
     pub async fn query_selector_all(

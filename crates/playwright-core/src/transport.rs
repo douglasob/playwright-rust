@@ -203,7 +203,7 @@ where
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::transport::PipeTransport;
     /// # use tokio::process::Command;
     /// # #[tokio::main]

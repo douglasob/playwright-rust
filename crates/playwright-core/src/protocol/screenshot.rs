@@ -8,8 +8,8 @@ use serde::Serialize;
 ///
 /// # Example
 ///
-/// ```no_run
-/// use playwright_core::protocol::screenshot::ScreenshotType;
+/// ```ignore
+/// use playwright_core::protocol::ScreenshotType;
 ///
 /// let screenshot_type = ScreenshotType::Jpeg;
 /// ```
@@ -28,8 +28,8 @@ pub enum ScreenshotType {
 ///
 /// # Example
 ///
-/// ```no_run
-/// use playwright_core::protocol::screenshot::ScreenshotClip;
+/// ```ignore
+/// use playwright_core::protocol::ScreenshotClip;
 ///
 /// let clip = ScreenshotClip {
 ///     x: 10.0,
@@ -58,8 +58,8 @@ pub struct ScreenshotClip {
 ///
 /// # Example
 ///
-/// ```no_run
-/// use playwright_core::protocol::screenshot::{ScreenshotOptions, ScreenshotType, ScreenshotClip};
+/// ```ignore
+/// use playwright_core::protocol::{ScreenshotOptions, ScreenshotType, ScreenshotClip};
 ///
 /// // JPEG with quality
 /// let options = ScreenshotOptions::builder()

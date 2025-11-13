@@ -24,6 +24,75 @@ use std::sync::Arc;
 /// Locators are lazy - they don't execute queries until an action is performed.
 /// This enables auto-waiting and retry-ability for robust test automation.
 ///
+/// # Examples
+///
+/// ```ignore
+/// use playwright_core::protocol::{Playwright, SelectOption};
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let playwright = Playwright::launch().await?;
+///     let browser = playwright.chromium().launch().await?;
+///     let page = browser.new_page().await?;
+///
+///     // Demonstrate set_checked() - checkbox interaction
+///     let _ = page.goto(
+///         "data:text/html,<input type='checkbox' id='cb'>",
+///         None
+///     ).await;
+///     let checkbox = page.locator("#cb").await;
+///     checkbox.set_checked(true, None).await?;
+///     assert!(checkbox.is_checked().await?);
+///     checkbox.set_checked(false, None).await?;
+///     assert!(!checkbox.is_checked().await?);
+///
+///     // Demonstrate select_option() - select by value, label, and index
+///     let _ = page.goto(
+///         "data:text/html,<select id='fruits'>\
+///             <option value='apple'>Apple</option>\
+///             <option value='banana'>Banana</option>\
+///             <option value='cherry'>Cherry</option>\
+///         </select>",
+///         None
+///     ).await;
+///     let select = page.locator("#fruits").await;
+///     select.select_option("banana", None).await?;
+///     assert_eq!(select.input_value(None).await?, "banana");
+///     select.select_option(SelectOption::Label("Apple".to_string()), None).await?;
+///     assert_eq!(select.input_value(None).await?, "apple");
+///     select.select_option(SelectOption::Index(2), None).await?;
+///     assert_eq!(select.input_value(None).await?, "cherry");
+///
+///     // Demonstrate select_option_multiple() - multi-select
+///     let _ = page.goto(
+///         "data:text/html,<select id='colors' multiple>\
+///             <option value='red'>Red</option>\
+///             <option value='green'>Green</option>\
+///             <option value='blue'>Blue</option>\
+///             <option value='yellow'>Yellow</option>\
+///         </select>",
+///         None
+///     ).await;
+///     let multi = page.locator("#colors").await;
+///     let selected = multi.select_option_multiple(&["red", "blue"], None).await?;
+///     assert_eq!(selected.len(), 2);
+///     assert!(selected.contains(&"red".to_string()));
+///     assert!(selected.contains(&"blue".to_string()));
+///
+///     // Demonstrate screenshot() - element screenshot
+///     let _ = page.goto(
+///         "data:text/html,<h1 id='title'>Hello World</h1>",
+///         None
+///     ).await;
+///     let heading = page.locator("#title").await;
+///     let screenshot = heading.screenshot(None).await?;
+///     assert!(!screenshot.is_empty());
+///
+///     browser.close().await?;
+///     Ok(())
+/// }
+/// ```
+///
 /// See: <https://playwright.dev/docs/api/class-locator>
 #[derive(Clone)]
 pub struct Locator {
@@ -222,35 +291,6 @@ impl Locator {
     /// This is a convenience method that calls `check()` if `checked` is true,
     /// or `uncheck()` if `checked` is false.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com/form", None).await?;
-    ///
-    /// let checkbox = page.locator("#terms").await;
-    ///
-    /// // Set to checked
-    /// checkbox.set_checked(true, None).await?;
-    ///
-    /// // Set to unchecked
-    /// checkbox.set_checked(false, None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// Returns error if:
-    /// - Element is not a checkbox or radio button
-    /// - Element is not actionable (disabled, not visible, etc.)
-    /// - Action timeout is exceeded
-    ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-set-checked>
     pub async fn set_checked(
         &self,
@@ -282,29 +322,6 @@ impl Locator {
     ///
     /// Returns an array of option values that have been successfully selected.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::{Playwright, SelectOption};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// let select = page.locator("select").await;
-    ///
-    /// // Select by value (backward compatible)
-    /// select.select_option("option1", None).await?;
-    ///
-    /// // Select by label
-    /// select.select_option(SelectOption::Label("First Option".to_string()), None).await?;
-    ///
-    /// // Select by index
-    /// select.select_option(SelectOption::Index(0), None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-select-option>
     pub async fn select_option(
         &self,
@@ -319,32 +336,6 @@ impl Locator {
     /// Selects multiple options in a select element.
     ///
     /// Returns an array of option values that have been successfully selected.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::{Playwright, SelectOption};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// let select = page.locator("select").await;
-    ///
-    /// // Select multiple by value (backward compatible)
-    /// select.select_option_multiple(&["red", "blue"], None).await?;
-    ///
-    /// // Select multiple using SelectOption
-    /// select.select_option_multiple(
-    ///     &[
-    ///         SelectOption::Label("Red".to_string()),
-    ///         SelectOption::Label("Blue".to_string()),
-    ///     ],
-    ///     None
-    /// ).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-select-option>
     pub async fn select_option_multiple(
@@ -415,23 +406,6 @@ impl Locator {
     ///
     /// This method uses strict mode - it will fail if the selector matches multiple elements.
     /// Use `first()`, `last()`, or `nth()` to refine the selector to a single element.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    /// page.goto("https://example.com", None).await?;
-    ///
-    /// let heading = page.locator("h1").await;
-    /// let screenshot = heading.screenshot(None).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-locator#locator-screenshot>
     pub async fn screenshot(

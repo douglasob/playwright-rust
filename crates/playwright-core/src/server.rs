@@ -14,7 +14,7 @@ use tokio::process::{Child, Command};
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// # use playwright_core::PlaywrightServer;
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

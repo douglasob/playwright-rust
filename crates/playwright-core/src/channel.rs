@@ -101,7 +101,7 @@ impl Channel {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::channel::Channel;
     /// # use serde::{Serialize, Deserialize};
     /// # async fn example(channel: &Channel) -> Result<(), Box<dyn std::error::Error>> {

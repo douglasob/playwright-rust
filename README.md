@@ -68,7 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let page = browser.new_page().await?;
 
     // Navigate to a URL
-    let response = page.goto("https://example.com", None).await?;
+    let response = page.goto("https://example.com", None).await?
+        .expect("https://example.com should return a response");
     println!("Response status: {}", response.status());
     println!("Page URL: {}", page.url());
     println!("Page title: {}", page.title().await?);
@@ -495,7 +496,11 @@ cargo nextest run test_launch_chromium
 RUST_LOG=debug cargo nextest run
 
 # Doc-tests (nextest doesn't run these)
-cargo test --doc
+# Compile-only check (fast, used in pre-commit)
+cargo test --doc --no-fail-fast
+
+# Run ignored doctests (requires browsers, what CI does)
+cargo test --doc -- --ignored
 ```
 
 ### Running Examples

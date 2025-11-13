@@ -38,7 +38,8 @@ async fn test_page_navigation_methods() {
     let response = page
         .goto("https://example.com", None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok(), "Response should be successful");
     assert_eq!(response.status(), 200, "Status should be 200");
@@ -68,14 +69,19 @@ async fn test_page_navigation_methods() {
     let response = page
         .goto("https://example.com", Some(options))
         .await
-        .expect("Failed to navigate with options");
+        .expect("Failed to navigate with options")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok());
     assert_eq!(page.url(), "https://example.com/");
     println!("✓ Navigation with options successful");
 
     // Test 5: Page reload
-    let response = page.reload(None).await.expect("Failed to reload page");
+    let response = page
+        .reload(None)
+        .await
+        .expect("Failed to reload page")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok());
     assert_eq!(response.status(), 200);
@@ -90,7 +96,8 @@ async fn test_page_navigation_methods() {
     let response = page
         .reload(Some(options))
         .await
-        .expect("Failed to reload page");
+        .expect("Failed to reload page")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok());
     assert_eq!(page.url(), "https://example.com/");
@@ -173,7 +180,8 @@ async fn test_cross_browser_smoke() {
     let response = firefox_page
         .goto("https://example.com", None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok(), "Response should be successful");
     assert_eq!(response.status(), 200, "Status should be 200");
@@ -203,7 +211,8 @@ async fn test_cross_browser_smoke() {
     let response = webkit_page
         .goto("https://example.com", None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response from https://example.com");
 
     assert!(response.ok(), "Response should be successful");
     assert_eq!(response.status(), 200, "Status should be 200");

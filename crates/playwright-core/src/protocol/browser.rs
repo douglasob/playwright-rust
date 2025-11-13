@@ -18,7 +18,7 @@ use std::sync::Arc;
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::protocol::Playwright;
 ///
 /// #[tokio::main]
@@ -26,14 +26,19 @@ use std::sync::Arc;
 ///     let playwright = Playwright::launch().await?;
 ///     let chromium = playwright.chromium();
 ///
-///     // Launch browser
+///     // Launch browser and get info
 ///     let browser = chromium.launch().await?;
-///
 ///     println!("Browser: {} version {}", browser.name(), browser.version());
 ///
-///     // Close browser
-///     browser.close().await?;
+///     // Create and use contexts and pages
+///     let context = browser.new_context().await?;
+///     let page = context.new_page().await?;
 ///
+///     // Convenience: create page directly (auto-creates default context)
+///     let page2 = browser.new_page().await?;
+///
+///     // Cleanup
+///     browser.close().await?;
 ///     Ok(())
 /// }
 /// ```
@@ -100,38 +105,16 @@ impl Browser {
         })
     }
 
-    /// Returns the browser version string
+    /// Returns the browser version string.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// println!("Browser version: {}", browser.version());
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// See: <https://playwright.dev/docs/api/class-browser#browser-version>
     pub fn version(&self) -> &str {
         &self.version
     }
 
-    /// Returns the browser name (e.g., "chromium", "firefox", "webkit")
+    /// Returns the browser name (e.g., "chromium", "firefox", "webkit").
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// assert_eq!(browser.name(), "chromium");
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// See: <https://playwright.dev/docs/api/class-browser#browser-name>
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -148,27 +131,6 @@ impl Browser {
     /// A browser context is an isolated session within the browser instance,
     /// similar to an incognito profile. Each context has its own cookies,
     /// cache, and local storage.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    ///
-    /// // Create an isolated context
-    /// let context = browser.new_context().await?;
-    ///
-    /// // Do work with context...
-    ///
-    /// // Cleanup
-    /// context.close().await?;
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -221,33 +183,6 @@ impl Browser {
     ///
     /// This method allows customizing viewport, user agent, locale, timezone,
     /// and other settings.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::{Playwright, BrowserContextOptions, Viewport};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    ///
-    /// // Create context with custom options
-    /// let options = BrowserContextOptions::builder()
-    ///     .viewport(Viewport { width: 1024, height: 768 })
-    ///     .locale("fr-FR".to_string())
-    ///     .user_agent("CustomBot/1.0".to_string())
-    ///     .build();
-    ///
-    /// let context = browser.new_context_with_options(options).await?;
-    ///
-    /// // Do work with context...
-    ///
-    /// // Cleanup
-    /// context.close().await?;
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -309,27 +244,6 @@ impl Browser {
     /// The created context is not directly accessible, but will be cleaned up
     /// when the page is closed.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    ///
-    /// // Create page directly (creates default context automatically)
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Do work with page...
-    ///
-    /// // Cleanup
-    /// page.close().await?;
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// # Errors
     ///
     /// Returns error if:
@@ -347,23 +261,6 @@ impl Browser {
     ///
     /// This is a graceful operation that sends a close command to the browser
     /// and waits for it to shut down properly.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    ///
-    /// // Do work with browser...
-    ///
-    /// // Close browser when done
-    /// browser.close().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///

@@ -27,12 +27,34 @@ use std::sync::Arc;
 ///
 /// # Example
 ///
-/// ```no_run
-/// # use playwright_core::protocol::BrowserType;
-/// # async fn example(chromium: &BrowserType) -> Result<(), Box<dyn std::error::Error>> {
-/// // Browser launching will be implemented in Phase 2
-/// println!("Browser: {}", chromium.name());
-/// println!("Executable: {}", chromium.executable_path());
+/// ```ignore
+/// # use playwright_core::protocol::Playwright;
+/// # use playwright_core::api::LaunchOptions;
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let playwright = Playwright::launch().await?;
+/// let chromium = playwright.chromium();
+///
+/// // Verify browser type info
+/// assert_eq!(chromium.name(), "chromium");
+/// assert!(!chromium.executable_path().is_empty());
+///
+/// // Launch with default options
+/// let browser1 = chromium.launch().await?;
+/// assert_eq!(browser1.name(), "chromium");
+/// assert!(!browser1.version().is_empty());
+/// browser1.close().await?;
+///
+/// // Launch with custom options
+/// let options = LaunchOptions::default()
+///     .headless(true)
+///     .slow_mo(100.0)
+///     .args(vec!["--no-sandbox".to_string()]);
+///
+/// let browser2 = chromium.launch_with_options(options).await?;
+/// assert_eq!(browser2.name(), "chromium");
+/// assert!(!browser2.version().is_empty());
+/// browser2.close().await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -110,23 +132,6 @@ impl BrowserType {
     ///
     /// This is equivalent to calling `launch_with_options(LaunchOptions::default())`.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let chromium = playwright.chromium();
-    ///
-    /// // Launch browser with default options
-    /// let browser = chromium.launch().await?;
-    ///
-    /// println!("Launched {} version {}", browser.name(), browser.version());
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// # Errors
     ///
     /// Returns error if:
@@ -144,29 +149,6 @@ impl BrowserType {
     /// # Arguments
     ///
     /// * `options` - Launch options (headless, args, etc.)
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # use playwright_core::api::LaunchOptions;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let chromium = playwright.chromium();
-    ///
-    /// // Launch with custom options
-    /// let options = LaunchOptions::default()
-    ///     .headless(true)
-    ///     .slow_mo(100.0)
-    ///     .args(vec!["--no-sandbox".to_string()]);
-    ///
-    /// let browser = chromium.launch_with_options(options).await?;
-    ///
-    /// println!("Launched {} version {}", browser.name(), browser.version());
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///

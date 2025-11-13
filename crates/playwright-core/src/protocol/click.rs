@@ -8,7 +8,7 @@ use serde::Serialize;
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::protocol::click::MouseButton;
 ///
 /// let button = MouseButton::Right;
@@ -28,7 +28,7 @@ pub enum MouseButton {
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::protocol::click::KeyboardModifier;
 ///
 /// let modifiers = vec![KeyboardModifier::Shift, KeyboardModifier::Control];
@@ -53,7 +53,7 @@ pub enum KeyboardModifier {
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::protocol::click::Position;
 ///
 /// let position = Position { x: 10.0, y: 20.0 };
@@ -74,7 +74,7 @@ pub struct Position {
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::protocol::click::{ClickOptions, MouseButton, KeyboardModifier, Position};
 ///
 /// // Right-click with modifiers

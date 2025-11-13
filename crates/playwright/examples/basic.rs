@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let page = browser.new_page().await?;
 
     // Navigate and check response
-    let response = page.goto("https://example.com", None).await?;
+    let response = page
+        .goto("https://example.com", None)
+        .await?
+        .expect("https://example.com should return a response");
     assert!(response.ok());
     assert_eq!(response.status(), 200);
 

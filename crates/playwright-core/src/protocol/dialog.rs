@@ -18,6 +18,8 @@ use std::sync::Arc;
 /// explicitly accepted or dismissed, otherwise the page will freeze waiting
 /// for the dialog to be handled.
 ///
+/// See module-level documentation for usage examples.
+///
 /// See: <https://playwright.dev/docs/api/class-dialog>
 #[derive(Clone)]
 pub struct Dialog {
@@ -53,28 +55,6 @@ impl Dialog {
     /// - "prompt" - Text input dialog
     /// - "beforeunload" - Page unload confirmation dialog
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.on_dialog(|dialog| async move {
-    ///     match dialog.type_() {
-    ///         "alert" => println!("Alert: {}", dialog.message()),
-    ///         "confirm" => dialog.accept(None).await?,
-    ///         "prompt" => dialog.accept(Some("user input")).await?,
-    ///         _ => dialog.dismiss().await?,
-    ///     }
-    ///     Ok(())
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-dialog#dialog-type>
     pub fn type_(&self) -> &str {
         self.initializer()
@@ -84,23 +64,6 @@ impl Dialog {
     }
 
     /// Returns the message displayed in the dialog.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.on_dialog(|dialog| async move {
-    ///     println!("Dialog message: {}", dialog.message());
-    ///     dialog.accept(None).await
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-dialog#dialog-message>
     pub fn message(&self) -> &str {
@@ -114,29 +77,6 @@ impl Dialog {
     ///
     /// For prompt dialogs, returns the default input value.
     /// For other dialog types (alert, confirm, beforeunload), returns an empty string.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.on_dialog(|dialog| async move {
-    ///     if dialog.type_() == "prompt" {
-    ///         let default = dialog.default_value();
-    ///         println!("Prompt default value: {}", default);
-    ///         // Use default or provide custom input
-    ///         dialog.accept(Some(default)).await
-    ///     } else {
-    ///         dialog.accept(None).await
-    ///     }
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/api/class-dialog#dialog-default-value>
     pub fn default_value(&self) -> &str {
@@ -154,26 +94,6 @@ impl Dialog {
     /// # Arguments
     ///
     /// * `prompt_text` - Optional text to enter in a prompt dialog
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.on_dialog(|dialog| async move {
-    ///     if dialog.type_() == "prompt" {
-    ///         dialog.accept(Some("my input")).await
-    ///     } else {
-    ///         dialog.accept(None).await
-    ///     }
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -198,27 +118,6 @@ impl Dialog {
     ///
     /// For confirm dialogs, this is equivalent to clicking "Cancel".
     /// For prompt dialogs, this is equivalent to clicking "Cancel".
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// page.on_dialog(|dialog| async move {
-    ///     if dialog.type_() == "beforeunload" {
-    ///         // Stay on the page
-    ///         dialog.dismiss().await
-    ///     } else {
-    ///         dialog.accept(None).await
-    ///     }
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///

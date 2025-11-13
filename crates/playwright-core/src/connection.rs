@@ -19,7 +19,7 @@
 //!
 //! # Example
 //!
-//! ```no_run
+//! ```ignore
 //! # use playwright_core::connection::Connection;
 //! # use playwright_core::transport::PipeTransport;
 //! # use serde_json::json;
@@ -357,7 +357,7 @@ where
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::connection::Connection;
     /// # use playwright_core::transport::PipeTransport;
     /// # use tokio::io::duplex;
@@ -409,27 +409,7 @@ where
     /// - Server returns an error
     /// - Connection is closed before response arrives
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::connection::Connection;
-    /// # use playwright_core::transport::PipeTransport;
-    /// # use serde_json::json;
-    /// # use tokio::io::duplex;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let (stdin_read, stdin_write) = duplex(1024);
-    /// # let (stdout_read, stdout_write) = duplex(1024);
-    /// # let (transport, message_rx) = PipeTransport::new(stdin_write, stdout_read);
-    /// # let connection = Connection::new(transport, message_rx);
-    /// let result = connection.send_message(
-    ///     "page@abc123",
-    ///     "goto",
-    ///     json!({"url": "https://example.com"})
-    /// ).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// See module-level documentation for usage examples.
     pub async fn send_message(&self, guid: &str, method: &str, params: Value) -> Result<Value> {
         // Generate unique ID (atomic increment for thread safety)
         let id = self.last_id.fetch_add(1, Ordering::SeqCst);
@@ -503,7 +483,7 @@ where
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::{Connection, PipeTransport, PlaywrightServer};
     /// # use std::sync::Arc;
     /// # #[tokio::main]
@@ -611,7 +591,7 @@ where
     ///
     /// This method should be spawned in a background task:
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::connection::Connection;
     /// # use playwright_core::transport::PipeTransport;
     /// # use std::sync::Arc;

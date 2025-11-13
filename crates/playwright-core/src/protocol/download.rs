@@ -101,7 +101,7 @@ impl Download {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::protocol::Download;
     /// # async fn example(download: Download) -> Result<(), Box<dyn std::error::Error>> {
     /// download.save_as("/path/to/save/file.pdf").await?;

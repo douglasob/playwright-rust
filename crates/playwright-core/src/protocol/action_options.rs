@@ -8,17 +8,6 @@ use super::click::{KeyboardModifier, Position};
 ///
 /// Configuration options for fill() action.
 ///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::FillOptions;
-///
-/// let options = FillOptions::builder()
-///     .force(true)
-///     .timeout(5000.0)
-///     .build();
-/// ```
-///
 /// See: <https://playwright.dev/docs/api/class-locator#locator-fill>
 #[derive(Debug, Clone, Default)]
 pub struct FillOptions {
@@ -86,17 +75,6 @@ impl FillOptionsBuilder {
 ///
 /// Configuration options for press() action.
 ///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::PressOptions;
-///
-/// let options = PressOptions::builder()
-///     .delay(100.0)
-///     .timeout(5000.0)
-///     .build();
-/// ```
-///
 /// See: <https://playwright.dev/docs/api/class-locator#locator-press>
 #[derive(Debug, Clone, Default)]
 pub struct PressOptions {
@@ -163,18 +141,6 @@ impl PressOptionsBuilder {
 /// Check options
 ///
 /// Configuration options for check() and uncheck() actions.
-///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::CheckOptions;
-/// use playwright_core::protocol::Position;
-///
-/// let options = CheckOptions::builder()
-///     .force(true)
-///     .position(Position { x: 5.0, y: 5.0 })
-///     .build();
-/// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-locator#locator-check>
 #[derive(Debug, Clone, Default)]
@@ -270,18 +236,6 @@ impl CheckOptionsBuilder {
 /// Hover options
 ///
 /// Configuration options for hover() action.
-///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::HoverOptions;
-/// use playwright_core::protocol::{Position, KeyboardModifier};
-///
-/// let options = HoverOptions::builder()
-///     .position(Position { x: 10.0, y: 10.0 })
-///     .modifiers(vec![KeyboardModifier::Shift])
-///     .build();
-/// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-locator#locator-hover>
 #[derive(Debug, Clone, Default)]
@@ -392,17 +346,6 @@ impl HoverOptionsBuilder {
 ///
 /// Configuration options for select_option() action.
 ///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::SelectOptions;
-///
-/// let options = SelectOptions::builder()
-///     .force(true)
-///     .timeout(5000.0)
-///     .build();
-/// ```
-///
 /// See: <https://playwright.dev/docs/api/class-locator#locator-select-option>
 #[derive(Debug, Clone, Default)]
 pub struct SelectOptions {
@@ -470,16 +413,6 @@ impl SelectOptionsBuilder {
 ///
 /// Configuration options for keyboard.press() and keyboard.type_text() methods.
 ///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::KeyboardOptions;
-///
-/// let options = KeyboardOptions::builder()
-///     .delay(100.0)
-///     .build();
-/// ```
-///
 /// See: <https://playwright.dev/docs/api/class-keyboard#keyboard-press>
 #[derive(Debug, Clone, Default)]
 pub struct KeyboardOptions {
@@ -527,19 +460,6 @@ impl KeyboardOptionsBuilder {
 /// Mouse options
 ///
 /// Configuration options for mouse methods.
-///
-/// # Example
-///
-/// ```no_run
-/// use playwright_core::protocol::action_options::MouseOptions;
-/// use playwright_core::protocol::MouseButton;
-///
-/// let options = MouseOptions::builder()
-///     .button(MouseButton::Right)
-///     .click_count(2)
-///     .delay(100.0)
-///     .build();
-/// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-mouse>
 #[derive(Debug, Clone, Default)]

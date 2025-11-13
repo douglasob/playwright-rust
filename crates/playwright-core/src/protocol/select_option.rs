@@ -8,8 +8,8 @@
 ///
 /// # Example
 ///
-/// ```no_run
-/// use playwright_core::protocol::select_option::SelectOption;
+/// ```ignore
+/// use playwright_core::protocol::SelectOption;
 ///
 /// // Select by value
 /// let opt = SelectOption::Value("option1".to_string());

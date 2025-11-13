@@ -11,7 +11,7 @@
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// # use playwright_core::protocol::FilePayload;
 /// let file = FilePayload::builder()
 ///     .name("document.pdf".to_string())

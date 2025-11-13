@@ -73,3 +73,12 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
+
+      # 5. Run doc-tests (same as CI: cargo test --doc)
+      - id: cargo-doctest
+        name: cargo test --doc
+        description: Run documentation tests
+        entry: cargo test --doc --workspace
+        language: system
+        types: [rust]
+        pass_filenames: false

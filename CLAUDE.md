@@ -214,37 +214,150 @@ Every public API must have:
 - Errors section (what can fail)
 - Notes on Rust-specific behavior if any
 
-Example:
+Example (for module-level doctests, not individual functions):
 ```rust
-/// Navigates to the specified URL.
-///
-/// # Example
-///
-/// ```no_run
-/// # use playwright::Playwright;
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let playwright = Playwright::launch().await?;
-/// let browser = playwright.chromium().launch().await?;
-/// let page = browser.new_page().await?;
-///
-/// page.goto("https://example.com").await?;
-/// # Ok(())
-/// # }
-/// ```
-///
-/// # Errors
-///
-/// Returns error if:
-/// - URL is invalid
-/// - Navigation timeout (default 30s)
-/// - Network error
-///
-/// See: <https://playwright.dev/docs/api/class-page#page-goto>
-pub async fn goto(&self, url: &str) -> Result<Response> {
+//! # Example
+//!
+//! ```ignore
+//! use playwright::Playwright;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let playwright = Playwright::launch().await?;
+//!     let browser = playwright.chromium().launch().await?;
+//!     let page = browser.new_page().await?;
+//!
+//!     // Demonstrate goto - navigates to the specified URL
+//!     page.goto("https://example.com", None).await?;
+//!
+//!     // Returns error if:
+//!     // - URL is invalid
+//!     // - Navigation timeout (default 30s)
+//!     // - Network error
+//!     //
+//!     // See: <https://playwright.dev/docs/api/class-page#page-goto>
+//!
+//!     browser.close().await?;
+//!     Ok(())
+//! }
+//! ```
+```
+
+**Note**: Individual function examples are discouraged. Use module-level doctests that demonstrate multiple related APIs together.
+
+## Documentation Testing Strategy
+
+### Philosophy: Executable Documentation
+
+We use a **module-level doctest approach** that ensures documentation stays synchronized with implementation:
+
+1. **All doctests use `ignore` annotation** - They compile and run, but only when explicitly requested
+2. **Module-level consolidation** - One comprehensive doctest per file for efficiency
+3. **Manually runnable** - Doctests can be executed to verify they match actual implementation
+4. **CI verification** - Full execution in GitHub Actions with `--ignored` flag
+5. **Pre-commit compilation** - Fast compile-only checks during local development
+
+### Why This Approach?
+
+**Playwright-rust has unique requirements:**
+- External Playwright server needed for execution
+- Cross-browser testing takes time
+- Documentation must reflect real, working examples
+- Risk of documentation drift from implementation
+
+**Our strategy**:
+- `ignore` annotation allows selective execution without slowing normal development
+- Module-level doctests are comprehensive integration tests
+- CI runs full execution to catch drift
+- Pre-commit hooks ensure doctests compile
+
+### Doctest Structure
+
+**All doctests use `ignore` and are placed at module level:**
+
+```rust
+//! Page protocol object
+//!
+//! Represents a web page within a browser context.
+//!
+//! # Example
+//!
+//! ```ignore
+//! use playwright_core::protocol::Playwright;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let playwright = Playwright::launch().await?;
+//!     let browser = playwright.chromium().launch().await?;
+//!     let page = browser.new_page().await?;
+//!
+//!     // Demonstrate multiple Page APIs in one comprehensive example
+//!     page.goto("https://example.com", None).await?;
+//!     let title = page.title().await?;
+//!     let screenshot = page.screenshot(None).await?;
+//!
+//!     browser.close().await?;
+//!     Ok(())
+//! }
+//! ```
+
+use crate::protocol::*;
+
+pub struct Page {
     // implementation...
 }
 ```
+
+**Key principles:**
+- **One doctest per module** - Consolidate all examples for that module
+- **Comprehensive coverage** - Demonstrate multiple APIs in realistic scenarios
+- **Always use `ignore`** - Never `no_run` or no annotation
+- **Full async context** - Include `#[tokio::main]` and proper error handling
+
+### Running Doc-Tests
+
+```bash
+# Compile doctests only (what pre-commit runs)
+cargo test --doc --workspace
+
+# Execute all ignored doctests (what CI runs)
+cargo test --doc --workspace -- --ignored
+
+# Execute specific module's doctest
+cargo test --doc -p playwright-core assertions -- --ignored
+
+# Execute specific file's doctest
+cargo test --doc --package playwright-core 'protocol::page::Page' -- --ignored
+```
+
+### CI/Pre-commit Integration
+
+**GitHub Actions CI:**
+```yaml
+- name: Run doctests
+  run: cargo test --doc --workspace -- --ignored
+```
+
+**Pre-commit hooks:**
+```yaml
+- name: Compile doctests
+  run: cargo test --doc --workspace
+```
+
+### Best Practices for Contributors
+
+1. **Module-level doctests only** - No individual function examples (prevents fragmentation)
+2. **Always use `ignore` annotation** - Enables manual execution without slowing development
+3. **Comprehensive scenarios** - Show multiple related APIs working together
+4. **Real-world usage** - Examples should reflect actual use cases
+5. **Test manually before pushing** - Run `cargo test --doc -p <crate> -- --ignored` to verify
+
+### Why `ignore` Instead of `no_run`?
+
+- **`no_run`**: Compiles but never executes → Documentation can drift from reality
+- **`ignore`**: Can be executed on-demand → Guarantees documentation matches implementation
+- **Manual verification**: Developers can run `--ignored` to validate examples
+- **CI enforcement**: Automated execution catches drift before merge
 
 ## Versioning and Release Strategy
 
@@ -463,7 +576,11 @@ cargo nextest run -p playwright-core
 cargo test
 
 # Doc-tests (nextest doesn't run these)
+# See "Documentation Testing Strategy" section for details
 cargo test --doc
+
+# Doc-tests for specific crate
+cargo test --doc -p playwright-core
 
 # Run example
 cargo run --example basic

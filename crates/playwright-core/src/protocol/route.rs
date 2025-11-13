@@ -121,32 +121,6 @@ impl Route {
     ///
     /// * `overrides` - Optional modifications to apply to the request
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::{Playwright, ContinueOptions};
-    /// # use std::collections::HashMap;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Modify headers when continuing route
-    /// page.route("**/*", |route| async move {
-    ///     let mut headers = HashMap::new();
-    ///     headers.insert("X-Custom-Header".to_string(), "value".to_string());
-    ///
-    ///     let options = ContinueOptions::builder()
-    ///         .headers(headers)
-    ///         .build();
-    ///
-    ///     route.continue_(Some(options)).await
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/api/class-route#route-continue>
     pub async fn continue_(&self, overrides: Option<ContinueOptions>) -> Result<()> {
         let mut params = json!({
@@ -195,27 +169,6 @@ impl Route {
     /// # Arguments
     ///
     /// * `options` - Response configuration (status, headers, body, etc.)
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::{Playwright, FulfillOptions};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// let browser = playwright.chromium().launch().await?;
-    /// let page = browser.new_page().await?;
-    ///
-    /// // Mock API with JSON response
-    /// page.route("**/api/data", |route| async move {
-    ///     let options = FulfillOptions::builder()
-    ///         .json(&serde_json::json!({"status": "ok"}))?
-    ///         .build();
-    ///     route.fulfill(Some(options)).await
-    /// }).await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Known Limitations
     ///
@@ -297,21 +250,6 @@ impl Route {
 /// Options for continuing a request with modifications.
 ///
 /// Allows modifying headers, method, post data, and URL when continuing a route.
-///
-/// # Example
-///
-/// ```no_run
-/// # use playwright_core::protocol::ContinueOptions;
-/// # use std::collections::HashMap;
-/// let mut headers = HashMap::new();
-/// headers.insert("X-Custom".to_string(), "value".to_string());
-///
-/// let options = ContinueOptions::builder()
-///     .headers(headers)
-///     .method("POST".to_string())
-///     .post_data("key=value".to_string())
-///     .build();
-/// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-route#route-continue>
 #[derive(Debug, Clone, Default)]

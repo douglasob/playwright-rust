@@ -20,24 +20,66 @@ const DEFAULT_POLL_INTERVAL: Duration = Duration::from_millis(100);
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```ignore
 /// use playwright_core::{expect, protocol::Playwright};
+/// use std::time::Duration;
 ///
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let playwright = Playwright::launch().await?;
-/// let browser = playwright.chromium().launch().await?;
-/// let page = browser.new_page().await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let playwright = Playwright::launch().await?;
+///     let browser = playwright.chromium().launch().await?;
+///     let page = browser.new_page().await?;
 ///
-/// page.goto("https://example.com", None).await?;
+///     // Test to_be_visible and to_be_hidden
+///     page.goto("data:text/html,<button id='btn'>Click me</button><div id='hidden' style='display:none'>Hidden</div>", None).await?;
+///     expect(page.locator("#btn").await).to_be_visible().await?;
+///     expect(page.locator("#hidden").await).to_be_hidden().await?;
 ///
-/// // Assert element is visible (with auto-retry)
-/// expect(page.locator("h1").await).to_be_visible().await?;
+///     // Test not() negation
+///     expect(page.locator("#btn").await).not().to_be_hidden().await?;
+///     expect(page.locator("#hidden").await).not().to_be_visible().await?;
 ///
-/// // Assert element is hidden
-/// expect(page.locator("dialog").await).to_be_hidden().await?;
-/// # Ok(())
-/// # }
+///     // Test with_timeout()
+///     page.goto("data:text/html,<div id='element'>Visible</div>", None).await?;
+///     expect(page.locator("#element").await)
+///         .with_timeout(Duration::from_secs(10))
+///         .to_be_visible()
+///         .await?;
+///
+///     // Test to_be_enabled and to_be_disabled
+///     page.goto("data:text/html,<button id='enabled'>Enabled</button><button id='disabled' disabled>Disabled</button>", None).await?;
+///     expect(page.locator("#enabled").await).to_be_enabled().await?;
+///     expect(page.locator("#disabled").await).to_be_disabled().await?;
+///
+///     // Test to_be_checked and to_be_unchecked
+///     page.goto("data:text/html,<input type='checkbox' id='checked' checked><input type='checkbox' id='unchecked'>", None).await?;
+///     expect(page.locator("#checked").await).to_be_checked().await?;
+///     expect(page.locator("#unchecked").await).to_be_unchecked().await?;
+///
+///     // Test to_be_editable
+///     page.goto("data:text/html,<input type='text' id='editable'>", None).await?;
+///     expect(page.locator("#editable").await).to_be_editable().await?;
+///
+///     // Test to_be_focused
+///     page.goto("data:text/html,<input type='text' id='input'>", None).await?;
+///     page.evaluate("document.getElementById('input').focus()").await?;
+///     expect(page.locator("#input").await).to_be_focused().await?;
+///
+///     // Test to_contain_text
+///     page.goto("data:text/html,<div id='content'>Hello World</div>", None).await?;
+///     expect(page.locator("#content").await).to_contain_text("Hello").await?;
+///     expect(page.locator("#content").await).to_contain_text("World").await?;
+///
+///     // Test to_have_text
+///     expect(page.locator("#content").await).to_have_text("Hello World").await?;
+///
+///     // Test to_have_value
+///     page.goto("data:text/html,<input type='text' id='input' value='test value'>", None).await?;
+///     expect(page.locator("#input").await).to_have_value("test value").await?;
+///
+///     browser.close().await?;
+///     Ok(())
+/// }
 /// ```
 ///
 /// See: <https://playwright.dev/docs/test-assertions>
@@ -66,23 +108,6 @@ impl Expectation {
 
     /// Sets a custom timeout for this assertion.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # use std::time::Duration;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("slow-element").await)
-    ///     .with_timeout(Duration::from_secs(10))
-    ///     .to_be_visible()
-    ///     .await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
@@ -98,24 +123,6 @@ impl Expectation {
 
     /// Negates the assertion.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// // Assert element is NOT visible
-    /// expect(page.locator("dialog").await)
-    ///     .not()
-    ///     .to_be_visible()
-    ///     .await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// Note: We intentionally use `.not()` method instead of implementing `std::ops::Not`
     /// to match Playwright's API across all language bindings (JS/Python/Java/.NET).
     #[allow(clippy::should_implement_trait)]
@@ -127,20 +134,6 @@ impl Expectation {
     /// Asserts that the element is visible.
     ///
     /// This assertion will retry until the element becomes visible or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("button").await).to_be_visible().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-visible>
     pub async fn to_be_visible(self) -> Result<()> {
@@ -182,20 +175,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the element becomes hidden or timeout.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("dialog").await).to_be_hidden().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-hidden>
     pub async fn to_be_hidden(self) -> Result<()> {
         // to_be_hidden is the opposite of to_be_visible
@@ -211,20 +190,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the element has the exact text or timeout.
     /// Text is trimmed before comparison.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("h1").await).to_have_text("Welcome").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-have-text>
     pub async fn to_have_text(self, expected: &str) -> Result<()> {
@@ -272,20 +237,6 @@ impl Expectation {
     /// Asserts that the element's text matches the specified regex pattern.
     ///
     /// This assertion will retry until the element's text matches the pattern or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("h1").await).to_have_text_regex(r"Welcome.*").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn to_have_text_regex(self, pattern: &str) -> Result<()> {
         let start = std::time::Instant::now();
         let selector = self.locator.selector().to_string();
@@ -332,20 +283,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the element contains the text or timeout.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("p").await).to_contain_text("substring").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-contain-text>
     pub async fn to_contain_text(self, expected: &str) -> Result<()> {
         let start = std::time::Instant::now();
@@ -390,20 +327,6 @@ impl Expectation {
     /// Asserts that the element's text contains a substring matching the regex pattern.
     ///
     /// This assertion will retry until the element contains the pattern or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("p").await).to_contain_text_regex(r"sub.*ing").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn to_contain_text_regex(self, pattern: &str) -> Result<()> {
         let start = std::time::Instant::now();
         let selector = self.locator.selector().to_string();
@@ -450,20 +373,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the input has the exact value or timeout.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input").await).to_have_value("expected value").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-have-value>
     pub async fn to_have_value(self, expected: &str) -> Result<()> {
         let start = std::time::Instant::now();
@@ -507,20 +416,6 @@ impl Expectation {
     /// Asserts that the input element's value matches the specified regex pattern.
     ///
     /// This assertion will retry until the input value matches the pattern or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input").await).to_have_value_regex(r"value.*").await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn to_have_value_regex(self, pattern: &str) -> Result<()> {
         let start = std::time::Instant::now();
         let selector = self.locator.selector().to_string();
@@ -567,20 +462,6 @@ impl Expectation {
     /// This assertion will retry until the element is enabled or timeout.
     /// An element is enabled if it does not have the "disabled" attribute.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("button").await).to_be_enabled().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-enabled>
     pub async fn to_be_enabled(self) -> Result<()> {
         let start = std::time::Instant::now();
@@ -622,20 +503,6 @@ impl Expectation {
     /// This assertion will retry until the element is disabled or timeout.
     /// An element is disabled if it has the "disabled" attribute.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("button").await).to_be_disabled().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-disabled>
     pub async fn to_be_disabled(self) -> Result<()> {
         // to_be_disabled is the opposite of to_be_enabled
@@ -650,20 +517,6 @@ impl Expectation {
     /// Asserts that the checkbox or radio button is checked.
     ///
     /// This assertion will retry until the element is checked or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input[type=checkbox]").await).to_be_checked().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-checked>
     pub async fn to_be_checked(self) -> Result<()> {
@@ -705,20 +558,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the element is unchecked or timeout.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input[type=checkbox]").await).to_be_unchecked().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-checked>
     pub async fn to_be_unchecked(self) -> Result<()> {
         // to_be_unchecked is the opposite of to_be_checked
@@ -734,20 +573,6 @@ impl Expectation {
     ///
     /// This assertion will retry until the element is editable or timeout.
     /// An element is editable if it is enabled and does not have the "readonly" attribute.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input").await).to_be_editable().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-editable>
     pub async fn to_be_editable(self) -> Result<()> {
@@ -792,20 +617,6 @@ impl Expectation {
     /// Asserts that the element is focused (currently has focus).
     ///
     /// This assertion will retry until the element becomes focused or timeout.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::{expect, protocol::Playwright};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let playwright = Playwright::launch().await?;
-    /// # let browser = playwright.chromium().launch().await?;
-    /// # let page = browser.new_page().await?;
-    /// expect(page.locator("input").await).to_be_focused().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// See: <https://playwright.dev/docs/test-assertions#locator-assertions-to-be-focused>
     pub async fn to_be_focused(self) -> Result<()> {

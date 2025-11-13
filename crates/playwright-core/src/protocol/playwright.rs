@@ -25,19 +25,33 @@ use std::sync::Arc;
 ///
 /// # Example
 ///
-/// ```no_run
-/// # use playwright_core::protocol::Playwright;
-/// # async fn example(playwright: &Playwright) -> Result<(), Box<dyn std::error::Error>> {
-/// // Access browser types (Phase 1 - objects exist but browsers not launched yet)
-/// let chromium = playwright.chromium();
-/// let firefox = playwright.firefox();
-/// let webkit = playwright.webkit();
+/// ```ignore
+/// use playwright_core::protocol::Playwright;
 ///
-/// println!("Chromium: {}", chromium.name());
-/// println!("Firefox: {}", firefox.name());
-/// println!("WebKit: {}", webkit.name());
-/// # Ok(())
-/// # }
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     // Launch Playwright server and initialize
+///     let playwright = Playwright::launch().await?;
+///
+///     // Verify all three browser types are available
+///     let chromium = playwright.chromium();
+///     let firefox = playwright.firefox();
+///     let webkit = playwright.webkit();
+///
+///     assert_eq!(chromium.name(), "chromium");
+///     assert_eq!(firefox.name(), "firefox");
+///     assert_eq!(webkit.name(), "webkit");
+///
+///     // Verify we can launch a browser
+///     let browser = chromium.launch().await?;
+///     assert!(!browser.version().is_empty());
+///     browser.close().await?;
+///
+///     // Shutdown when done
+///     playwright.shutdown().await?;
+///
+///     Ok(())
+/// }
 /// ```
 ///
 /// See: <https://playwright.dev/docs/api/class-playwright>
@@ -67,21 +81,6 @@ impl Playwright {
     /// 2. Establish a connection via stdio
     /// 3. Initialize the protocol
     /// 4. Return a Playwright instance with access to browser types
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use playwright_core::protocol::Playwright;
-    ///
-    /// #[tokio::main]
-    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let playwright = Playwright::launch().await?;
-    ///     println!("Chromium: {}", playwright.chromium().name());
-    ///     println!("Firefox: {}", playwright.firefox().name());
-    ///     println!("WebKit: {}", playwright.webkit().name());
-    ///     Ok(())
-    /// }
-    /// ```
     ///
     /// # Errors
     ///
@@ -214,16 +213,6 @@ impl Playwright {
     }
 
     /// Returns the Chromium browser type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # async fn example(playwright: &Playwright) {
-    /// let chromium = playwright.chromium();
-    /// println!("Browser: {}", chromium.name());
-    /// # }
-    /// ```
     pub fn chromium(&self) -> &BrowserType {
         // Downcast from Arc<dyn ChannelOwner> to &BrowserType
         self.chromium
@@ -252,18 +241,6 @@ impl Playwright {
     ///
     /// This method should be called when you're done using Playwright to ensure
     /// the server process is terminated cleanly, especially on Windows.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use playwright_core::protocol::Playwright;
-    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// let playwright = Playwright::launch().await?;
-    /// // ... use playwright ...
-    /// playwright.shutdown().await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     ///
     /// # Platform-Specific Behavior
     ///

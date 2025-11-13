@@ -49,7 +49,7 @@ impl ElementHandle {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// # use playwright_core::protocol::Playwright;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

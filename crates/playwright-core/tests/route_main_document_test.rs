@@ -70,7 +70,8 @@ async fn test_route_fulfill_main_document() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     // Status code DOES work correctly
     assert_eq!(response.status(), 200, "Status code is correctly fulfilled");
@@ -149,7 +150,8 @@ async fn test_route_fulfill_main_document_with_status() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     // KNOWN ISSUE: Even status codes don't work for main document in some cases
     // We expect 200 instead of 404 due to Playwright limitation with main documents
@@ -222,7 +224,8 @@ async fn test_route_fulfill_main_document_firefox() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(response.status(), 200, "Status works in Firefox");
 
@@ -290,7 +293,8 @@ async fn test_route_fulfill_main_document_webkit() {
     let response = page
         .goto(&format!("{}/", server.url()), None)
         .await
-        .expect("Failed to navigate");
+        .expect("Failed to navigate")
+        .expect("Expected a response");
 
     assert_eq!(response.status(), 200, "Status works in WebKit");
 
