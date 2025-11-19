@@ -100,6 +100,17 @@ This feedback-driven approach ensures we're solving real problems, not theoretic
 - [ ] Create list of needed examples
 - [ ] Performance profiling in real usage
 
+**Progress:**
+- [x] Resolved Issue #1: Headless mode control (Verified)
+- [x] Resolved Issue #2: Browser.isConnected() (Implemented)
+
+**Iterative Workflow:**
+This slice follows a feedback loop with the Folio project:
+1. **Identify**: Attempt to implement user stories in Folio until a blocker/pain point is hit.
+2. **Resolve**: Switch to `playwright-rust` to resolve the specific issue (e.g., missing feature, bug).
+3. **Repeat**: Return to Folio and continue until the user story is complete.
+4. **Finalize**: Once Folio integration is stable, complete the remaining documentation and profiling tasks.
+
 **Success Criteria:**
 - Folio successfully using playwright-rust in production
 - Pain points documented and prioritized

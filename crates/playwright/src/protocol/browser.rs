@@ -11,6 +11,8 @@ use serde_json::Value;
 use std::any::Any;
 use std::sync::Arc;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
 /// Browser represents a browser instance.
 ///
 /// A Browser is created when you call `BrowserType::launch()`. It provides methods
@@ -30,6 +32,9 @@ use std::sync::Arc;
 ///     let browser = chromium.launch().await?;
 ///     println!("Browser: {} version {}", browser.name(), browser.version());
 ///
+///     // Check connection status
+///     assert!(browser.is_connected());
+///
 ///     // Create and use contexts and pages
 ///     let context = browser.new_context().await?;
 ///     let page = context.new_page().await?;
@@ -39,6 +44,7 @@ use std::sync::Arc;
 ///
 ///     // Cleanup
 ///     browser.close().await?;
+///     assert!(!browser.is_connected());
 ///     Ok(())
 /// }
 /// ```
@@ -49,6 +55,7 @@ pub struct Browser {
     base: ChannelOwnerImpl,
     version: String,
     name: String,
+    is_connected: Arc<AtomicBool>,
 }
 
 impl Browser {
@@ -102,6 +109,7 @@ impl Browser {
             base,
             version,
             name,
+            is_connected: Arc::new(AtomicBool::new(true)),
         })
     }
 
@@ -117,6 +125,18 @@ impl Browser {
     /// See: <https://playwright.dev/docs/api/class-browser#browser-name>
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Returns true if the browser is connected.
+    ///
+    /// The browser is connected when it is launched and becomes disconnected when:
+    /// - `browser.close()` is called
+    /// - The browser process crashes
+    /// - The browser is closed by the user
+    ///
+    /// See: <https://playwright.dev/docs/api/class-browser#browser-is-connected>
+    pub fn is_connected(&self) -> bool {
+        self.is_connected.load(Ordering::SeqCst)
     }
 
     /// Returns the channel for sending protocol messages
@@ -318,6 +338,7 @@ impl ChannelOwner for Browser {
     }
 
     fn dispose(&self, reason: crate::server::channel_owner::DisposeReason) {
+        self.is_connected.store(false, Ordering::SeqCst);
         self.base.dispose(reason)
     }
 
@@ -333,8 +354,11 @@ impl ChannelOwner for Browser {
         self.base.remove_child(guid)
     }
 
-    fn on_event(&self, _method: &str, _params: Value) {
-        // TODO: Handle browser events in future phases
+    fn on_event(&self, method: &str, params: Value) {
+        if method == "disconnected" {
+            self.is_connected.store(false, Ordering::SeqCst);
+        }
+        self.base.on_event(method, params)
     }
 
     fn was_collected(&self) -> bool {

@@ -168,3 +168,38 @@ async fn test_close_multiple_browsers() {
     browser2.close().await.expect("Failed to close browser 2");
     println!("✓ Browser 2 closed");
 }
+
+#[tokio::test]
+async fn test_browser_is_connected() {
+    let playwright = Playwright::launch()
+        .await
+        .expect("Failed to launch Playwright");
+    let chromium = playwright.chromium();
+
+    // Launch browser
+    let browser = chromium.launch().await.expect("Failed to launch browser");
+
+    // Should be connected initially
+    assert!(
+        browser.is_connected(),
+        "Browser should be connected after launch"
+    );
+
+    // Close browser
+    browser.close().await.expect("Failed to close browser");
+
+    // Should be disconnected after close
+    // Note: close() waits for the server to process the close command,
+    // which should trigger the "disconnected" event before returning or shortly after.
+
+    // Check immediately first.
+    if browser.is_connected() {
+        // Give it a moment for the event to arrive
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+    }
+
+    assert!(
+        !browser.is_connected(),
+        "Browser should be disconnected after close"
+    );
+}

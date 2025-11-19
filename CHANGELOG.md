@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.0] - 2025-11-16
 
+### Added
+
+- `Browser::is_connected()` method to check if the browser is still connected to the server (Issue #2)
+
 ### Changed
 
 - **[BREAKING] Single-crate architecture** - Consolidated `playwright-core` into `playwright-rs` to match all official Playwright implementations (Python, Java, .NET, Node.js)
