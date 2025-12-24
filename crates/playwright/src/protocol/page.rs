@@ -26,7 +26,7 @@ use std::sync::{Arc, Mutex, RwLock};
 /// # Example
 ///
 /// ```ignore
-/// use playwright_rs::protocol::{Playwright, ScreenshotOptions, ScreenshotType};
+/// use playwright_rs::protocol::{Playwright, ScreenshotOptions, ScreenshotType, AddStyleTagOptions};
 /// use std::path::PathBuf;
 ///
 /// #[tokio::main]
@@ -112,6 +112,13 @@ use std::sync::{Arc, Mutex, RwLock};
 ///         println!("Dialog: {} - {}", dialog.type_(), dialog.message());
 ///         dialog.accept(None).await
 ///     }).await?;
+///
+///     // Demonstrate add_style_tag() - inject CSS
+///     page.add_style_tag(
+///         AddStyleTagOptions::builder()
+///             .content("body { background-color: blue; }")
+///             .build()
+///     ).await?;
 ///
 ///     // Demonstrate close()
 ///     page.close().await?;
@@ -945,6 +952,75 @@ impl Page {
     pub async fn trigger_dialog_event(&self, dialog: Dialog) {
         self.on_dialog_event(dialog).await;
     }
+
+    /// Adds a `<style>` tag into the page with the desired content.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - Style tag options (content, url, or path)
+    ///
+    /// # Returns
+    ///
+    /// Returns an ElementHandle pointing to the injected `<style>` tag
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use playwright_rs::protocol::AddStyleTagOptions;
+    ///
+    /// // With inline CSS
+    /// page.add_style_tag(
+    ///     AddStyleTagOptions::builder()
+    ///         .content("body { background-color: red; }")
+    ///         .build()
+    /// ).await?;
+    ///
+    /// // With external URL
+    /// page.add_style_tag(
+    ///     AddStyleTagOptions::builder()
+    ///         .url("https://example.com/style.css")
+    ///         .build()
+    /// ).await?;
+    ///
+    /// // From file
+    /// page.add_style_tag(
+    ///     AddStyleTagOptions::builder()
+    ///         .path("./styles/custom.css")
+    ///         .build()
+    /// ).await?;
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-page#page-add-style-tag>
+    pub async fn add_style_tag(
+        &self,
+        options: AddStyleTagOptions,
+    ) -> Result<Arc<crate::protocol::ElementHandle>> {
+        let frame = self.main_frame().await?;
+        frame.add_style_tag(options).await
+    }
+
+    /// Adds a script which would be evaluated in one of the following scenarios:
+    /// - Whenever the page is navigated
+    /// - Whenever a child frame is attached or navigated
+    ///
+    /// The script is evaluated after the document was created but before any of its scripts were run.
+    ///
+    /// # Arguments
+    ///
+    /// * `script` - JavaScript code to be injected into the page
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// page.add_init_script("window.injected = 123;").await?;
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-page#page-add-init-script>
+    pub async fn add_init_script(&self, script: &str) -> Result<()> {
+        self.channel()
+            .send_no_result("addInitScript", serde_json::json!({ "source": script }))
+            .await
+    }
 }
 
 impl ChannelOwner for Page {
@@ -1165,6 +1241,73 @@ impl WaitUntil {
             WaitUntil::DomContentLoaded => "domcontentloaded",
             WaitUntil::NetworkIdle => "networkidle",
             WaitUntil::Commit => "commit",
+        }
+    }
+}
+
+/// Options for adding a style tag to the page
+///
+/// See: <https://playwright.dev/docs/api/class-page#page-add-style-tag>
+#[derive(Debug, Clone, Default)]
+pub struct AddStyleTagOptions {
+    /// Raw CSS content to inject
+    pub content: Option<String>,
+    /// URL of the `<link>` tag to add
+    pub url: Option<String>,
+    /// Path to a CSS file to inject
+    pub path: Option<String>,
+}
+
+impl AddStyleTagOptions {
+    /// Creates a new builder for AddStyleTagOptions
+    pub fn builder() -> AddStyleTagOptionsBuilder {
+        AddStyleTagOptionsBuilder::default()
+    }
+
+    /// Validates that at least one option is specified
+    pub(crate) fn validate(&self) -> Result<()> {
+        if self.content.is_none() && self.url.is_none() && self.path.is_none() {
+            return Err(Error::InvalidArgument(
+                "At least one of content, url, or path must be specified".to_string(),
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// Builder for AddStyleTagOptions
+#[derive(Debug, Clone, Default)]
+pub struct AddStyleTagOptionsBuilder {
+    content: Option<String>,
+    url: Option<String>,
+    path: Option<String>,
+}
+
+impl AddStyleTagOptionsBuilder {
+    /// Sets the CSS content to inject
+    pub fn content(mut self, content: impl Into<String>) -> Self {
+        self.content = Some(content.into());
+        self
+    }
+
+    /// Sets the URL of the stylesheet
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = Some(url.into());
+        self
+    }
+
+    /// Sets the path to a CSS file
+    pub fn path(mut self, path: impl Into<String>) -> Self {
+        self.path = Some(path.into());
+        self
+    }
+
+    /// Builds the AddStyleTagOptions
+    pub fn build(self) -> AddStyleTagOptions {
+        AddStyleTagOptions {
+            content: self.content,
+            url: self.url,
+            path: self.path,
         }
     }
 }

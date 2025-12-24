@@ -1083,6 +1083,86 @@ impl Frame {
             }
         }
     }
+
+    /// Adds a `<style>` tag into the page with the desired content.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - Style tag options (content, url, or path)
+    ///
+    /// At least one of `content`, `url`, or `path` must be specified.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use playwright_rs::protocol::AddStyleTagOptions;
+    ///
+    /// // With inline CSS
+    /// frame.add_style_tag(
+    ///     AddStyleTagOptions::builder()
+    ///         .content("body { background-color: red; }")
+    ///         .build()
+    /// ).await?;
+    ///
+    /// // With URL
+    /// frame.add_style_tag(
+    ///     AddStyleTagOptions::builder()
+    ///         .url("https://example.com/style.css")
+    ///         .build()
+    /// ).await?;
+    /// ```
+    ///
+    /// See: <https://playwright.dev/docs/api/class-frame#frame-add-style-tag>
+    pub async fn add_style_tag(
+        &self,
+        options: crate::protocol::page::AddStyleTagOptions,
+    ) -> Result<Arc<crate::protocol::ElementHandle>> {
+        // Validate that at least one option is provided
+        options.validate()?;
+
+        // Build protocol parameters
+        let mut params = serde_json::json!({});
+
+        if let Some(content) = &options.content {
+            params["content"] = serde_json::json!(content);
+        }
+
+        if let Some(url) = &options.url {
+            params["url"] = serde_json::json!(url);
+        }
+
+        if let Some(path) = &options.path {
+            // Read file content and send as content
+            let css_content = tokio::fs::read_to_string(path).await.map_err(|e| {
+                Error::InvalidArgument(format!("Failed to read CSS file '{}': {}", path, e))
+            })?;
+            params["content"] = serde_json::json!(css_content);
+        }
+
+        #[derive(Deserialize)]
+        struct AddStyleTagResponse {
+            element: serde_json::Value,
+        }
+
+        let response: AddStyleTagResponse = self.channel().send("addStyleTag", params).await?;
+
+        let guid = response.element["guid"].as_str().ok_or_else(|| {
+            Error::ProtocolError("Element GUID missing in addStyleTag response".to_string())
+        })?;
+
+        let connection = self.base.connection();
+        let element = connection.get_object(guid).await?;
+
+        let handle = element
+            .as_any()
+            .downcast_ref::<crate::protocol::ElementHandle>()
+            .map(|e| Arc::new(e.clone()))
+            .ok_or_else(|| {
+                Error::ProtocolError(format!("Object {} is not an ElementHandle", guid))
+            })?;
+
+        Ok(handle)
+    }
 }
 
 impl ChannelOwner for Frame {

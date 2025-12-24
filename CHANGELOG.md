@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-12-24
+
+### Added
+
+- **Script Injection** - `BrowserContext.add_init_script()` for context-level script injection before page load
+- **Script Injection** - `Page.add_init_script()` for page-level script injection before page load
+- **Style Injection** - `Page.add_style_tag()` for injecting CSS into pages
+  - `AddStyleTagOptions` struct with builder pattern
+  - Support for inline `content` (CSS string)
+  - Support for external `url` (stylesheet URL)
+  - Support for `path` (load CSS from file)
+  - Returns `ElementHandle` to the injected style tag
+
 ## [0.7.0] - 2025-11-16
 
 ### Added
