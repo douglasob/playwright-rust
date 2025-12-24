@@ -7,8 +7,11 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_evaluate_arithmetic() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -37,6 +40,7 @@ async fn test_evaluate_arithmetic() {
 
 #[tokio::test]
 async fn test_evaluate_string() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -65,6 +69,7 @@ async fn test_evaluate_string() {
 
 #[tokio::test]
 async fn test_evaluate_boolean() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -99,6 +104,7 @@ async fn test_evaluate_boolean() {
 
 #[tokio::test]
 async fn test_evaluate_fetch_result() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

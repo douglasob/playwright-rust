@@ -15,12 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 // Initialize tracing for test debugging
-fn init_tracing() {
-    let _ = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .with_test_writer()
-        .try_init();
-}
+mod common;
 
 /// Test the complete initialization flow with a real Playwright server
 ///
@@ -39,14 +34,14 @@ fn init_tracing() {
 /// 9. Verify browser types are accessible
 #[tokio::test]
 async fn test_initialize_playwright_with_real_server() {
-    init_tracing();
+    common::init_tracing();
 
     // 1. Launch server
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test - server launch failed: {}", e);
-            eprintln!("This is expected if Node.js or Playwright is not installed");
+            tracing::warn!("Skipping test - server launch failed: {}", e);
+            tracing::warn!("This is expected if Node.js or Playwright is not installed");
             return;
         }
     };
@@ -69,16 +64,16 @@ async fn test_initialize_playwright_with_real_server() {
     // Give the connection a moment to start
     tokio::time::sleep(Duration::from_millis(100)).await;
 
-    println!("About to call initialize_playwright...");
+    tracing::info!("About to call initialize_playwright...");
 
     // 5. Initialize Playwright
     let playwright_obj = match connection.initialize_playwright().await {
         Ok(obj) => {
-            println!("initialize_playwright succeeded!");
+            tracing::info!("initialize_playwright succeeded!");
             obj
         }
         Err(e) => {
-            eprintln!("initialize_playwright failed: {:?}", e);
+            tracing::error!("initialize_playwright failed: {:?}", e);
             panic!("Failed to initialize Playwright: {:?}", e);
         }
     };
@@ -109,10 +104,10 @@ async fn test_initialize_playwright_with_real_server() {
     // Clean up
     let _ = server.shutdown().await;
 
-    println!("✓ Server launched successfully");
-    println!("✓ Connection created successfully");
-    println!("✓ Playwright initialized successfully");
-    println!("✓ All three browser types accessible");
+    tracing::info!("✓ Server launched successfully");
+    tracing::info!("✓ Connection created successfully");
+    tracing::info!("✓ Playwright initialized successfully");
+    tracing::info!("✓ All three browser types accessible");
 }
 
 /// Test timeout handling for initialize
@@ -137,7 +132,7 @@ async fn test_initialize_timeout() {
     // This is tested indirectly by test_connection_detects_server_crash_on_send
     // in connection.rs which verifies broken pipes are detected quickly.
 
-    println!("✓ Timeout mechanism verified via connection layer tests");
+    tracing::info!("✓ Timeout mechanism verified via connection layer tests");
 }
 
 /// Test error handling when server crashes during init
@@ -163,7 +158,7 @@ async fn test_initialize_with_server_crash() {
     // initialize_playwright(), the send_message call will fail with
     // a transport error, which propagates up correctly.
 
-    println!("✓ Server crash handling verified via connection layer tests");
+    tracing::info!("✓ Server crash handling verified via connection layer tests");
 }
 
 /// Test that initialize creates all expected objects
@@ -185,5 +180,5 @@ async fn test_initialize_creates_all_objects() {
     //
     // No need to duplicate that logic here.
 
-    println!("✓ Object creation verified via test_initialize_playwright_with_real_server");
+    tracing::info!("✓ Object creation verified via test_initialize_playwright_with_real_server");
 }

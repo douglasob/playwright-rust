@@ -6,6 +6,7 @@
 // - Style tag with URL parameter
 // - Error cases - invalid options
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::{AddStyleTagOptions, Playwright};
@@ -13,6 +14,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_add_style_tag_with_content() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -69,6 +71,7 @@ async fn test_add_style_tag_with_content() {
 
 #[tokio::test]
 async fn test_add_style_tag_multiple_styles() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -150,6 +153,7 @@ async fn test_add_style_tag_multiple_styles() {
 
 #[tokio::test]
 async fn test_add_style_tag_after_navigation() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -217,6 +221,7 @@ async fn test_add_style_tag_after_navigation() {
 
 #[tokio::test]
 async fn test_add_style_tag_error_no_options() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -250,6 +255,7 @@ async fn test_add_style_tag_error_no_options() {
 
 #[tokio::test]
 async fn test_add_style_tag_chromium() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -295,6 +301,7 @@ async fn test_add_style_tag_chromium() {
 
 #[tokio::test]
 async fn test_add_style_tag_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -342,6 +349,7 @@ async fn test_add_style_tag_firefox() {
 
 #[tokio::test]
 async fn test_add_style_tag_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

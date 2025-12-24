@@ -14,8 +14,11 @@
 
 use playwright_rs::protocol::{BrowserContextOptions, Geolocation, Playwright, Viewport};
 
+mod common;
+
 #[tokio::test]
 async fn test_context_with_viewport() {
+    common::init_tracing();
     // Test creating context with custom viewport
     let playwright = Playwright::launch()
         .await
@@ -59,6 +62,7 @@ async fn test_context_with_viewport() {
 
 #[tokio::test]
 async fn test_context_with_user_agent() {
+    common::init_tracing();
     // Test creating context with custom user agent
     let playwright = Playwright::launch()
         .await
@@ -94,6 +98,7 @@ async fn test_context_with_user_agent() {
 
 #[tokio::test]
 async fn test_context_with_locale() {
+    common::init_tracing();
     // Test creating context with custom locale
     let playwright = Playwright::launch()
         .await
@@ -128,6 +133,7 @@ async fn test_context_with_locale() {
 
 #[tokio::test]
 async fn test_context_with_timezone() {
+    common::init_tracing();
     // Test creating context with custom timezone
     let playwright = Playwright::launch()
         .await
@@ -162,6 +168,7 @@ async fn test_context_with_timezone() {
 
 #[tokio::test]
 async fn test_context_with_geolocation() {
+    common::init_tracing();
     // Test creating context with geolocation
     let playwright = Playwright::launch()
         .await
@@ -204,6 +211,7 @@ async fn test_context_with_geolocation() {
 #[tokio::test]
 #[ignore = "Mobile viewport not applied correctly - needs investigation"]
 async fn test_context_mobile_emulation() {
+    common::init_tracing();
     // Test creating context with mobile emulation
     let playwright = Playwright::launch()
         .await
@@ -255,6 +263,7 @@ async fn test_context_mobile_emulation() {
 #[tokio::test]
 #[ignore = "JavaScript disable doesn't prevent evaluate - Playwright limitation"]
 async fn test_context_javascript_disabled() {
+    common::init_tracing();
     // Test creating context with JavaScript disabled
     let playwright = Playwright::launch()
         .await
@@ -288,6 +297,7 @@ async fn test_context_javascript_disabled() {
 
 #[tokio::test]
 async fn test_context_offline_mode() {
+    common::init_tracing();
     // Test creating context in offline mode
     let playwright = Playwright::launch()
         .await
@@ -317,6 +327,7 @@ async fn test_context_offline_mode() {
 
 #[tokio::test]
 async fn test_context_combined_options() {
+    common::init_tracing();
     // Test creating context with multiple options combined
     let playwright = Playwright::launch()
         .await
@@ -372,6 +383,7 @@ async fn test_context_combined_options() {
 
 #[tokio::test]
 async fn test_context_no_viewport() {
+    common::init_tracing();
     // Test creating context with no viewport (null viewport)
     let playwright = Playwright::launch()
         .await
@@ -408,6 +420,7 @@ async fn test_context_no_viewport() {
 
 #[tokio::test]
 async fn test_context_cross_browser_options() {
+    common::init_tracing();
     // Verify context options work across Chromium, Firefox, and WebKit
     let playwright = Playwright::launch()
         .await

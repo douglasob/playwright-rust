@@ -20,12 +20,15 @@ use playwright_rs::protocol::{GotoOptions, Playwright, WaitUntil};
 use std::time::Duration;
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // Navigation Error Methods
 // ============================================================================
 
 #[tokio::test]
 async fn test_navigation_error_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -51,7 +54,7 @@ async fn test_navigation_error_methods() {
         error_msg
     );
 
-    println!("✓ Timeout error with descriptive message");
+    tracing::info!("✓ Timeout error with descriptive message");
 
     // Test 2: goto() with valid timeout should succeed
     let options = GotoOptions::new().timeout(Duration::from_secs(10));
@@ -64,13 +67,13 @@ async fn test_navigation_error_methods() {
         "Navigation should succeed with valid timeout"
     );
 
-    println!("✓ Navigation with valid timeout succeeds");
+    tracing::info!("✓ Navigation with valid timeout succeeds");
 
     // Test 3: goto() with invalid URL should error
     let result = page.goto("not-a-valid-url", None).await;
     assert!(result.is_err(), "Expected error for invalid URL");
 
-    println!("✓ Invalid URL produces error");
+    tracing::info!("✓ Invalid URL produces error");
 
     // Test 4: reload() with very short timeout
     // First navigate back to valid page
@@ -84,7 +87,7 @@ async fn test_navigation_error_methods() {
     // May or may not timeout depending on timing, but should not crash
     let _ = result;
 
-    println!("✓ Reload with short timeout handled gracefully");
+    tracing::info!("✓ Reload with short timeout handled gracefully");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -96,6 +99,7 @@ async fn test_navigation_error_methods() {
 
 #[tokio::test]
 async fn test_wait_until_options() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -118,7 +122,7 @@ async fn test_wait_until_options() {
         "Navigation with wait_until=Load should succeed"
     );
 
-    println!("✓ wait_until=Load works");
+    tracing::info!("✓ wait_until=Load works");
 
     // Test 2: wait_until DomContentLoaded
     let options = GotoOptions::new().wait_until(WaitUntil::DomContentLoaded);
@@ -131,7 +135,7 @@ async fn test_wait_until_options() {
         "Navigation with wait_until=DOMContentLoaded should succeed"
     );
 
-    println!("✓ wait_until=DomContentLoaded works");
+    tracing::info!("✓ wait_until=DomContentLoaded works");
 
     // Test 3: wait_until NetworkIdle
     let options = GotoOptions::new().wait_until(WaitUntil::NetworkIdle);
@@ -144,7 +148,7 @@ async fn test_wait_until_options() {
         "Navigation with wait_until=NetworkIdle should succeed"
     );
 
-    println!("✓ wait_until=NetworkIdle works");
+    tracing::info!("✓ wait_until=NetworkIdle works");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -156,6 +160,7 @@ async fn test_wait_until_options() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify navigation errors work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each method)
@@ -179,7 +184,7 @@ async fn test_cross_browser_smoke() {
 
     assert!(result.is_err(), "Expected timeout error in Firefox");
 
-    println!("✓ Firefox timeout error works");
+    tracing::info!("✓ Firefox timeout error works");
 
     firefox.close().await.expect("Failed to close Firefox");
 
@@ -198,7 +203,7 @@ async fn test_cross_browser_smoke() {
 
     assert!(result.is_err(), "Expected timeout error in WebKit");
 
-    println!("✓ WebKit timeout error works");
+    tracing::info!("✓ WebKit timeout error works");
 
     webkit.close().await.expect("Failed to close WebKit");
 }

@@ -9,8 +9,11 @@ use playwright_rs::protocol::Playwright;
 use std::sync::{Arc, Mutex};
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_route_registration() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -50,11 +53,12 @@ async fn test_route_registration() {
 
     // For now, just verify route registered successfully
     // Handler invocation will be tested once protocol integration is complete
-    println!("Route registration test passed");
+    tracing::info!("Route registration test passed");
 }
 
 #[tokio::test]
 async fn test_route_continue() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

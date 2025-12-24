@@ -15,6 +15,8 @@ use playwright_rs::protocol::Playwright;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+mod common;
+
 // ============================================================================
 // Download Methods
 // ============================================================================
@@ -27,6 +29,7 @@ use std::time::Duration;
 /// 3. Download can be saved to disk
 #[tokio::test]
 async fn test_download_methods() -> Result<(), Box<dyn std::error::Error>> {
+    common::init_tracing();
     let playwright = Playwright::launch().await?;
     let browser = playwright.chromium().launch().await?;
     let page = browser.new_page().await?;
@@ -142,6 +145,7 @@ async fn test_download_methods() -> Result<(), Box<dyn std::error::Error>> {
 /// 4. Dialog can be accepted
 #[tokio::test]
 async fn test_dialog_alert_methods() -> Result<(), Box<dyn std::error::Error>> {
+    common::init_tracing();
     let playwright = Playwright::launch().await?;
     let browser = playwright.chromium().launch().await?;
     let page = browser.new_page().await?;
@@ -204,6 +208,7 @@ async fn test_dialog_alert_methods() -> Result<(), Box<dyn std::error::Error>> {
 /// 4. Dialog can be dismissed (returns false)
 #[tokio::test]
 async fn test_dialog_confirm_methods() -> Result<(), Box<dyn std::error::Error>> {
+    common::init_tracing();
     let playwright = Playwright::launch().await?;
 
     // Test 1: Confirm accept
@@ -303,6 +308,7 @@ async fn test_dialog_confirm_methods() -> Result<(), Box<dyn std::error::Error>>
 /// 5. Prompt can be dismissed (returns null)
 #[tokio::test]
 async fn test_dialog_prompt_methods() -> Result<(), Box<dyn std::error::Error>> {
+    common::init_tracing();
     let playwright = Playwright::launch().await?;
 
     // Test 1: Prompt with custom input
@@ -406,6 +412,7 @@ async fn test_dialog_prompt_methods() -> Result<(), Box<dyn std::error::Error>> 
 ///  so we don't need exhaustive cross-browser testing for each method)
 #[tokio::test]
 async fn test_cross_browser_smoke() -> Result<(), Box<dyn std::error::Error>> {
+    common::init_tracing();
     let playwright = Playwright::launch().await?;
 
     // Test Firefox - dialog

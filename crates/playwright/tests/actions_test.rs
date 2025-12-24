@@ -18,12 +18,15 @@ mod test_server;
 use playwright_rs::protocol::{GotoOptions, Playwright};
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // Click Actions
 // ============================================================================
 
 #[tokio::test]
 async fn test_click_actions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -67,6 +70,7 @@ async fn test_click_actions() {
 
 #[tokio::test]
 async fn test_fill_and_clear_actions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -145,6 +149,7 @@ async fn test_fill_and_clear_actions() {
 
 #[tokio::test]
 async fn test_keyboard_actions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -185,6 +190,7 @@ async fn test_keyboard_actions() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify actions work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each action)

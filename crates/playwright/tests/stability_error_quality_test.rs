@@ -17,6 +17,7 @@
 // - Errors include "what went wrong" details
 // - Errors suggest next steps when applicable
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::{ClickOptions, GotoOptions, Playwright};
@@ -29,7 +30,8 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_error_quality_element_not_found() {
-    println!("\n=== Testing Error Quality: Element Not Found ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Element Not Found ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -59,7 +61,7 @@ async fn test_error_quality_element_not_found() {
     assert!(result.is_err(), "Expected error for non-existent element");
 
     let error_msg = format!("{:?}", result.unwrap_err());
-    println!("Error message: {}", error_msg);
+    tracing::info!("Error message: {}", error_msg);
 
     // ASSERTION: Error should mention the selector
     assert!(
@@ -72,7 +74,7 @@ async fn test_error_quality_element_not_found() {
     // Expected improvement: "Failed to click: Element not found: button.does-not-exist"
     // Current state might just say "Element not found"
 
-    println!("\n✓ Element not found error includes selector");
+    tracing::info!("\n✓ Element not found error includes selector");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -84,7 +86,8 @@ async fn test_error_quality_element_not_found() {
 
 #[tokio::test]
 async fn test_error_quality_navigation_timeout() {
-    println!("\n=== Testing Error Quality: Navigation Timeout ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Navigation Timeout ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -105,7 +108,7 @@ async fn test_error_quality_navigation_timeout() {
     assert!(result.is_err(), "Expected timeout error");
 
     let error_msg = format!("{:?}", result.unwrap_err());
-    println!("Error message: {}", error_msg);
+    tracing::info!("Error message: {}", error_msg);
 
     // ASSERTION: Error should mention timeout
     assert!(
@@ -118,7 +121,7 @@ async fn test_error_quality_navigation_timeout() {
     // Expected improvement: "Navigation timeout after 100ms navigating to http://10.255.255.1:9999/page.html"
     // Current state might just say "Timeout: ..."
 
-    println!("\n✓ Navigation timeout error includes timeout duration");
+    tracing::info!("\n✓ Navigation timeout error includes timeout duration");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -129,7 +132,8 @@ async fn test_error_quality_navigation_timeout() {
 
 #[tokio::test]
 async fn test_error_quality_invalid_url() {
-    println!("\n=== Testing Error Quality: Invalid URL ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Invalid URL ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -148,7 +152,7 @@ async fn test_error_quality_invalid_url() {
     assert!(result.is_err(), "Expected error for invalid URL");
 
     let error_msg = format!("{:?}", result.unwrap_err());
-    println!("Error message: {}", error_msg);
+    tracing::info!("Error message: {}", error_msg);
 
     // ASSERTION: Error should indicate what was wrong with the URL
     // Expected improvement: "Invalid URL: 'not-a-valid-url' is not a valid URL"
@@ -156,7 +160,7 @@ async fn test_error_quality_invalid_url() {
 
     assert!(!error_msg.is_empty(), "Error message should not be empty");
 
-    println!("\n✓ Invalid URL error is descriptive");
+    tracing::info!("\n✓ Invalid URL error is descriptive");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -167,7 +171,8 @@ async fn test_error_quality_invalid_url() {
 
 #[tokio::test]
 async fn test_error_quality_connection_failed() {
-    println!("\n=== Testing Error Quality: Connection Failed ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Connection Failed ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -186,14 +191,14 @@ async fn test_error_quality_connection_failed() {
     assert!(result.is_err(), "Expected connection error");
 
     let error_msg = format!("{:?}", result.unwrap_err());
-    println!("Error message: {}", error_msg);
+    tracing::info!("Error message: {}", error_msg);
 
     // ASSERTION: Error should explain the connection failure
     // Expected improvement: "Connection failed: Cannot connect to http://localhost:59999/ (connection refused)"
 
     assert!(!error_msg.is_empty(), "Error message should not be empty");
 
-    println!("\n✓ Connection failed error is descriptive");
+    tracing::info!("\n✓ Connection failed error is descriptive");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -204,7 +209,8 @@ async fn test_error_quality_connection_failed() {
 
 #[tokio::test]
 async fn test_error_quality_operation_after_close() {
-    println!("\n=== Testing Error Quality: Operation After Close ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Operation After Close ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -225,7 +231,7 @@ async fn test_error_quality_operation_after_close() {
     assert!(result.is_err(), "Expected error for closed page");
 
     let error_msg = format!("{:?}", result.unwrap_err());
-    println!("Error message: {}", error_msg);
+    tracing::info!("Error message: {}", error_msg);
 
     // ASSERTION: Error should explain that the target was closed
     // Expected improvement: "Page is closed: Cannot perform navigation on a closed page"
@@ -237,7 +243,7 @@ async fn test_error_quality_operation_after_close() {
         error_msg
     );
 
-    println!("\n✓ Operation after close error is descriptive");
+    tracing::info!("\n✓ Operation after close error is descriptive");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -248,7 +254,8 @@ async fn test_error_quality_operation_after_close() {
 
 #[tokio::test]
 async fn test_error_quality_assertion_timeout() {
-    println!("\n=== Testing Error Quality: Assertion Timeout ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Assertion Timeout ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -277,17 +284,17 @@ async fn test_error_quality_assertion_timeout() {
 
     if let Err(e) = result {
         let error_msg = format!("{:?}", e);
-        println!("Error message: {}", error_msg);
+        tracing::info!("Error message: {}", error_msg);
 
         // ASSERTION: Error should mention what was waited for
         // Expected improvement: "Timeout waiting for selector 'button.does-not-exist' to be visible"
 
         assert!(!error_msg.is_empty(), "Error message should not be empty");
     } else {
-        println!("Unexpected success (element should not exist)");
+        tracing::error!("Unexpected success (element should not exist)");
     }
 
-    println!("\n✓ Assertion timeout error includes context");
+    tracing::info!("\n✓ Assertion timeout error includes context");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -299,7 +306,8 @@ async fn test_error_quality_assertion_timeout() {
 
 #[tokio::test]
 async fn test_error_quality_error_sequence() {
-    println!("\n=== Testing Error Quality: Multiple Errors ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Quality: Multiple Errors ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -325,13 +333,13 @@ async fn test_error_quality_error_sequence() {
         assert!(result.is_err(), "{} should produce error", test_name);
 
         let error_msg = format!("{:?}", result.unwrap_err());
-        println!("{}: {}", test_name, error_msg);
+        tracing::info!("{}: {}", test_name, error_msg);
 
         // Each error should be non-empty and descriptive
         assert!(!error_msg.is_empty(), "Error message should not be empty");
     }
 
-    println!("\n✓ Multiple errors are each descriptive");
+    tracing::info!("\n✓ Multiple errors are each descriptive");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -342,33 +350,30 @@ async fn test_error_quality_error_sequence() {
 
 #[tokio::test]
 async fn test_error_quality_audit() {
-    println!("\n=== Error Quality Audit ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Error Quality Audit ===\n");
 
     // This test documents expected error message improvements
     // for each error variant in error.rs
 
-    println!("Error Quality Expectations:");
-    println!();
-    println!("1. ServerNotFound:");
-    println!("   Current: 'Playwright server not found at expected location'");
-    println!("   Improved: 'Playwright server not found. Install with: npm install playwright'");
-    println!();
-    println!("2. LaunchFailed:");
-    println!("   Current: 'Failed to launch Playwright server: <details>'");
-    println!("   Improved: 'Failed to launch Playwright server: <details>. Check that Node.js is installed.'");
-    println!();
-    println!("3. ElementNotFound:");
-    println!("   Current: 'Element not found: <selector>'");
-    println!("   Improved: 'Element not found: <selector>. Waited for <timeout>. Retry with longer timeout or check selector.'");
-    println!();
-    println!("4. Timeout:");
-    println!("   Current: 'Timeout: <message>'");
-    println!("   Improved: 'Timeout after <duration>: <operation> (<url>). Increase timeout or check network.'");
-    println!();
-    println!("5. TargetClosed:");
-    println!("   Current: 'Target closed: <message>'");
-    println!("   Improved: 'Target closed: Cannot perform <operation> on closed <target>.'");
-    println!();
+    tracing::info!("Error Quality Expectations:");
+    tracing::info!("1. ServerNotFound:");
+    tracing::info!("   Current: 'Playwright server not found at expected location'");
+    tracing::info!(
+        "   Improved: 'Playwright server not found. Install with: npm install playwright'"
+    );
+    tracing::info!("2. LaunchFailed:");
+    tracing::info!("   Current: 'Failed to launch Playwright server: <details>'");
+    tracing::info!("   Improved: 'Failed to launch Playwright server: <details>. Check that Node.js is installed.'");
+    tracing::info!("3. ElementNotFound:");
+    tracing::info!("   Current: 'Element not found: <selector>'");
+    tracing::info!("   Improved: 'Element not found: <selector>. Waited for <timeout>. Retry with longer timeout or check selector.'");
+    tracing::info!("4. Timeout:");
+    tracing::info!("   Current: 'Timeout: <message>'");
+    tracing::info!("   Improved: 'Timeout after <duration>: <operation> (<url>). Increase timeout or check network.'");
+    tracing::info!("5. TargetClosed:");
+    tracing::info!("   Current: 'Target closed: <message>'");
+    tracing::info!("   Improved: 'Target closed: Cannot perform <operation> on closed <target>.'");
 
-    println!("\n✓ Error quality audit documented");
+    tracing::info!("\n✓ Error quality audit documented");
 }

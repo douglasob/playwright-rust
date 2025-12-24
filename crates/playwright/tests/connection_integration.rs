@@ -13,6 +13,8 @@ use playwright_rs::server::{connection::Connection, playwright_server::Playwrigh
 use std::sync::Arc;
 use tokio::time::Duration;
 
+mod common;
+
 /// Test that we can establish a connection with real server and spawn message loops
 ///
 /// This test verifies:
@@ -22,12 +24,13 @@ use tokio::time::Duration;
 /// - Everything runs together and shuts down cleanly
 #[tokio::test]
 async fn test_connection_lifecycle_with_real_server() {
+    common::init_tracing();
     // Launch Playwright server
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test: Could not launch Playwright server: {}", e);
-            eprintln!("This is expected if Node.js or Playwright driver is not available");
+            tracing::warn!("Skipping test: Could not launch Playwright server: {}", e);
+            tracing::warn!("This is expected if Node.js or Playwright driver is not available");
             return;
         }
     };
@@ -81,10 +84,11 @@ async fn test_connection_lifecycle_with_real_server() {
 /// expected behavior - the important thing is that send operations fail fast.
 #[tokio::test]
 async fn test_connection_detects_server_crash_on_send() {
+    common::init_tracing();
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test: Could not launch Playwright server: {}", e);
+            tracing::warn!("Skipping test: Could not launch Playwright server: {}", e);
             return;
         }
     };
@@ -151,6 +155,7 @@ async fn test_connection_detects_server_crash_on_send() {
 /// (Browser, Context, Page) are properly correlated when responses arrive.
 #[tokio::test]
 async fn test_concurrent_requests_with_server() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -212,6 +217,7 @@ async fn test_concurrent_requests_with_server() {
 /// converted to Rust errors and propagated correctly.
 #[tokio::test]
 async fn test_error_response_from_server() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");

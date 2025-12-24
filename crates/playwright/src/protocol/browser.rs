@@ -303,7 +303,7 @@ impl Browser {
         {
             let is_ci = std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok();
             if is_ci {
-                eprintln!("[playwright-rust] Adding Windows CI browser cleanup delay");
+                tracing::debug!("[playwright-rust] Adding Windows CI browser cleanup delay");
                 tokio::time::sleep(std::time::Duration::from_millis(500)).await;
             }
         }

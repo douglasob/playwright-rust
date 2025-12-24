@@ -30,7 +30,7 @@ anyhow = { workspace = true }
 axum = "0.7.9"
 tower = "0.5.2"
 tower-http = "0.6.6"
-tracing-subscriber = { version = "0.3", features = ["fmt"] }
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 criterion = { version = "0.7", features = ["html_reports", "async_tokio"] }
 urlencoding = "2.1"
 

@@ -327,6 +327,33 @@ impl Page {
         Ok(response)
     }
 
+    /// Returns the browser context that the page belongs to.
+    pub fn context(&self) -> Result<crate::protocol::BrowserContext> {
+        let parent = self.base.parent().ok_or_else(|| Error::TargetClosed {
+            target_type: "Page".into(),
+            context: "Parent context not found".into(),
+        })?;
+
+        let context = parent
+            .as_any()
+            .downcast_ref::<crate::protocol::BrowserContext>()
+            .ok_or_else(|| {
+                Error::ProtocolError("Page parent is not a BrowserContext".to_string())
+            })?;
+
+        Ok(context.clone())
+    }
+
+    /// Pauses script execution.
+    ///
+    /// Playwright will stop executing the script and wait for the user to either press
+    /// "Resume" in the page overlay or in the debugger.
+    ///
+    /// See: <https://playwright.dev/docs/api/class-page#page-pause>
+    pub async fn pause(&self) -> Result<()> {
+        self.context()?.pause().await
+    }
+
     /// Returns the page's title.
     ///
     /// See: <https://playwright.dev/docs/api/class-page#page-title>
@@ -843,7 +870,7 @@ impl Page {
                 // Execute handler and wait for completion
                 // This ensures fulfill/continue/abort completes before browser continues
                 if let Err(e) = handler(route).await {
-                    eprintln!("Route handler error: {}", e);
+                    tracing::warn!("Route handler error: {}", e);
                 }
                 break;
             }
@@ -929,7 +956,7 @@ impl Page {
 
         for handler in handlers {
             if let Err(e) = handler(download.clone()).await {
-                eprintln!("Download handler error: {}", e);
+                tracing::warn!("Download handler error: {}", e);
             }
         }
     }
@@ -940,7 +967,7 @@ impl Page {
 
         for handler in handlers {
             if let Err(e) = handler(dialog.clone()).await {
-                eprintln!("Dialog handler error: {}", e);
+                tracing::warn!("Dialog handler error: {}", e);
             }
         }
     }
@@ -1111,7 +1138,7 @@ impl ChannelOwner for Page {
                         let route_arc = match connection.get_object(&route_guid_owned).await {
                             Ok(obj) => obj,
                             Err(e) => {
-                                eprintln!("Failed to get route object: {}", e);
+                                tracing::warn!("Failed to get route object: {}", e);
                                 return;
                             }
                         };
@@ -1120,7 +1147,7 @@ impl ChannelOwner for Page {
                         let route = match route_arc.as_any().downcast_ref::<Route>() {
                             Some(r) => r.clone(),
                             None => {
-                                eprintln!("Failed to downcast to Route");
+                                tracing::warn!("Failed to downcast to Route");
                                 return;
                             }
                         };
@@ -1159,7 +1186,7 @@ impl ChannelOwner for Page {
                         let artifact_arc = match connection.get_object(&artifact_guid_owned).await {
                             Ok(obj) => obj,
                             Err(e) => {
-                                eprintln!("Failed to get artifact object: {}", e);
+                                tracing::warn!("Failed to get artifact object: {}", e);
                                 return;
                             }
                         };

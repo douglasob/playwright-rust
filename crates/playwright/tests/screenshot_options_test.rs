@@ -17,8 +17,11 @@ use playwright_rs::protocol::screenshot::{ScreenshotClip, ScreenshotOptions, Scr
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_screenshot_all_page_options() {
+    common::init_tracing();
     // Combined test: All page screenshot options in one browser session
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -107,6 +110,7 @@ async fn test_screenshot_all_page_options() {
 
 #[tokio::test]
 async fn test_screenshot_element_and_locator_with_options() {
+    common::init_tracing();
     // Combined test: Element and locator screenshots with options
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -160,6 +164,7 @@ async fn test_screenshot_element_and_locator_with_options() {
 
 #[tokio::test]
 async fn test_screenshot_options_firefox() {
+    common::init_tracing();
     // Cross-browser test: Firefox
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -193,6 +198,7 @@ async fn test_screenshot_options_firefox() {
 
 #[tokio::test]
 async fn test_screenshot_options_webkit() {
+    common::init_tracing();
     // Cross-browser test: WebKit
     let server = TestServer::start().await;
     let playwright = Playwright::launch()

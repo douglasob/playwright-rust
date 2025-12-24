@@ -17,6 +17,7 @@
 // - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
 // - Expected speedup: ~78% (9 tests → 2 tests)
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::action_options::{
@@ -32,6 +33,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_action_options_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -58,7 +60,7 @@ async fn test_action_options_methods() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "Hello World");
 
-    println!("✓ Fill with force option works");
+    tracing::info!("✓ Fill with force option works");
 
     // Test 2: Press with delay option
     page.goto(&format!("{}/keyboard.html", server.url()), None)
@@ -77,7 +79,7 @@ async fn test_action_options_methods() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "submitted");
 
-    println!("✓ Press with delay option works");
+    tracing::info!("✓ Press with delay option works");
 
     // Test 3: Check with force and trial options
     page.goto(&format!("{}/checkbox.html", server.url()), None)
@@ -108,7 +110,7 @@ async fn test_action_options_methods() {
         "Trial uncheck should not actually uncheck"
     );
 
-    println!("✓ Check with force and trial options work");
+    tracing::info!("✓ Check with force and trial options work");
 
     // Test 4: Hover with position option
     page.goto(&format!("{}/hover.html", server.url()), None)
@@ -130,7 +132,7 @@ async fn test_action_options_methods() {
         "Tooltip should be visible after hover"
     );
 
-    println!("✓ Hover with position option works");
+    tracing::info!("✓ Hover with position option works");
 
     // Test 5: Select with force option
     page.goto(&format!("{}/select.html", server.url()), None)
@@ -146,7 +148,7 @@ async fn test_action_options_methods() {
 
     assert_eq!(selected, vec!["apple"]);
 
-    println!("✓ Select with force option works");
+    tracing::info!("✓ Select with force option works");
 
     // Test 6: Keyboard type with delay option
     page.goto(&format!("{}/keyboard_mouse.html", server.url()), None)
@@ -166,7 +168,7 @@ async fn test_action_options_methods() {
     let value = input.input_value(None).await.unwrap();
     assert_eq!(value, "Hello");
 
-    println!("✓ Keyboard type with delay option works");
+    tracing::info!("✓ Keyboard type with delay option works");
 
     // Test 7: Mouse click with options
     let mouse = page.mouse();
@@ -187,7 +189,7 @@ async fn test_action_options_methods() {
         .unwrap();
     assert_eq!(result, "Clicked");
 
-    println!("✓ Mouse click with options works");
+    tracing::info!("✓ Mouse click with options works");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -199,6 +201,7 @@ async fn test_action_options_methods() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify action options work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each method)
@@ -234,7 +237,7 @@ async fn test_cross_browser_smoke() {
     let value = firefox_input.input_value(None).await.unwrap();
     assert_eq!(value, "Firefox Test");
 
-    println!("✓ Firefox action options work");
+    tracing::info!("✓ Firefox action options work");
 
     firefox.close().await.expect("Failed to close Firefox");
 
@@ -266,7 +269,7 @@ async fn test_cross_browser_smoke() {
         "Checkbox should be checked in WebKit"
     );
 
-    println!("✓ WebKit action options work");
+    tracing::info!("✓ WebKit action options work");
 
     webkit.close().await.expect("Failed to close WebKit");
     server.shutdown();

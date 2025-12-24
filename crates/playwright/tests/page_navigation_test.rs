@@ -16,12 +16,15 @@
 use playwright_rs::protocol::{GotoOptions, Playwright, WaitUntil};
 use std::time::Duration;
 
+mod common;
+
 // ============================================================================
 // Page Navigation Methods
 // ============================================================================
 
 #[tokio::test]
 async fn test_page_navigation_methods() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -46,12 +49,12 @@ async fn test_page_navigation_methods() {
     assert_eq!(response.url(), "https://example.com/");
     assert_eq!(page.url(), "https://example.com/");
 
-    println!("✓ Basic navigation successful");
+    tracing::info!("✓ Basic navigation successful");
 
     // Test 2: Get page title
     let title = page.title().await.expect("Failed to get title");
     assert_eq!(title, "Example Domain");
-    println!("✓ Page title: {}", title);
+    tracing::info!("✓ Page title: {}", title);
 
     // Test 3: URL tracking across navigations
     // Navigate to second URL (rust-lang.org redirects to remove www)
@@ -59,7 +62,7 @@ async fn test_page_navigation_methods() {
         .await
         .expect("Failed to navigate");
     assert_eq!(page.url(), "https://rust-lang.org/");
-    println!("✓ URL tracking works correctly");
+    tracing::info!("✓ URL tracking works correctly");
 
     // Test 4: Navigate with options
     let options = GotoOptions::new()
@@ -74,7 +77,7 @@ async fn test_page_navigation_methods() {
 
     assert!(response.ok());
     assert_eq!(page.url(), "https://example.com/");
-    println!("✓ Navigation with options successful");
+    tracing::info!("✓ Navigation with options successful");
 
     // Test 5: Page reload
     let response = page
@@ -86,7 +89,7 @@ async fn test_page_navigation_methods() {
     assert!(response.ok());
     assert_eq!(response.status(), 200);
     assert_eq!(page.url(), "https://example.com/");
-    println!("✓ Page reload successful");
+    tracing::info!("✓ Page reload successful");
 
     // Test 6: Reload with options
     let options = GotoOptions::new()
@@ -101,7 +104,7 @@ async fn test_page_navigation_methods() {
 
     assert!(response.ok());
     assert_eq!(page.url(), "https://example.com/");
-    println!("✓ Page reload with options successful");
+    tracing::info!("✓ Page reload with options successful");
 
     // Cleanup
     page.close().await.expect("Failed to close page");
@@ -114,6 +117,7 @@ async fn test_page_navigation_methods() {
 
 #[tokio::test]
 async fn test_multiple_pages_independent_urls() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -146,7 +150,7 @@ async fn test_multiple_pages_independent_urls() {
     assert_eq!(page1.url(), "https://example.com/");
     assert_eq!(page2.url(), "https://rust-lang.org/");
 
-    println!("✓ Multiple pages have independent URLs");
+    tracing::info!("✓ Multiple pages have independent URLs");
 
     // Cleanup
     page1.close().await.expect("Failed to close page 1");
@@ -160,6 +164,7 @@ async fn test_multiple_pages_independent_urls() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify navigation works in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each method)
@@ -191,7 +196,7 @@ async fn test_cross_browser_smoke() {
     let title = firefox_page.title().await.expect("Failed to get title");
     assert_eq!(title, "Example Domain");
 
-    println!("✓ Firefox navigation successful");
+    tracing::info!("✓ Firefox navigation successful");
 
     firefox_page
         .close()
@@ -222,7 +227,7 @@ async fn test_cross_browser_smoke() {
     let title = webkit_page.title().await.expect("Failed to get title");
     assert_eq!(title, "Example Domain");
 
-    println!("✓ WebKit navigation successful");
+    tracing::info!("✓ WebKit navigation successful");
 
     webkit_page
         .close()

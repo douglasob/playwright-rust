@@ -8,8 +8,11 @@ use playwright_rs::protocol::Playwright;
 use std::sync::{Arc, Mutex};
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_route_pattern_matching_wildcard() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -78,7 +81,7 @@ async fn test_route_pattern_matching_wildcard() {
     server.shutdown();
 
     // Verify wildcard handler was called for HTML (most general pattern wins for this URL)
-    println!(
+    tracing::info!(
         "Handler calls - all: {}, png: {}, js: {}",
         *all_called.lock().unwrap(),
         *png_called.lock().unwrap(),
@@ -88,6 +91,7 @@ async fn test_route_pattern_matching_wildcard() {
 
 #[tokio::test]
 async fn test_route_pattern_priority() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -153,6 +157,7 @@ async fn test_route_pattern_priority() {
 
 #[tokio::test]
 async fn test_route_conditional_matching() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -208,6 +213,7 @@ async fn test_route_conditional_matching() {
 
 #[tokio::test]
 async fn test_route_extension_patterns() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

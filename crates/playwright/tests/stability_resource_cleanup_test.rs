@@ -15,6 +15,7 @@
 // - Clean server lifecycle management
 // - Process tree fully cleaned up
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::Playwright;
@@ -125,12 +126,14 @@ fn count_playwright_processes() -> Option<usize> {
 
 #[tokio::test]
 #[cfg(unix)]
+#[cfg(unix)]
 async fn test_file_descriptor_cleanup() {
-    println!("\n=== Testing File Descriptor Cleanup ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing File Descriptor Cleanup ===\n");
 
     // Record initial FD count
     let initial_fds = count_open_file_descriptors().unwrap_or(0);
-    println!("Initial file descriptors: {}", initial_fds);
+    tracing::info!("Initial file descriptors: {}", initial_fds);
 
     // Launch and close Playwright multiple times
     const CYCLES: usize = 10;
@@ -161,7 +164,7 @@ async fn test_file_descriptor_cleanup() {
 
         if i % 2 == 1 {
             let current_fds = count_open_file_descriptors().unwrap_or(0);
-            println!("After cycle {}: {} FDs", i + 1, current_fds);
+            tracing::debug!("After cycle {}: {} FDs", i + 1, current_fds);
         }
     }
 
@@ -170,8 +173,8 @@ async fn test_file_descriptor_cleanup() {
 
     // Check final FD count
     let final_fds = count_open_file_descriptors().unwrap_or(0);
-    println!("\nFinal file descriptors: {}", final_fds);
-    println!("FD growth: {}", final_fds as i32 - initial_fds as i32);
+    tracing::info!("\nFinal file descriptors: {}", final_fds);
+    tracing::info!("FD growth: {}", final_fds as i32 - initial_fds as i32);
 
     // ASSERTION: FD count should not grow significantly
     // Allow some variance (10 FDs) for normal system behavior
@@ -182,7 +185,7 @@ async fn test_file_descriptor_cleanup() {
         fd_growth
     );
 
-    println!("\n✓ File descriptors cleaned up properly");
+    tracing::info!("\n✓ File descriptors cleaned up properly");
 }
 
 // ============================================================================
@@ -192,11 +195,12 @@ async fn test_file_descriptor_cleanup() {
 #[tokio::test]
 #[cfg(unix)]
 async fn test_process_cleanup() {
-    println!("\n=== Testing Process Cleanup ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Process Cleanup ===\n");
 
     // Record initial child process count
     let initial_children = count_child_processes().unwrap_or(0);
-    println!("Initial child processes: {}", initial_children);
+    tracing::info!("Initial child processes: {}", initial_children);
 
     // Launch and close Playwright
     let playwright = Playwright::launch()
@@ -205,8 +209,9 @@ async fn test_process_cleanup() {
 
     // During operation, should have child processes
     tokio::time::sleep(Duration::from_millis(100)).await;
+    tokio::time::sleep(Duration::from_millis(100)).await;
     let during_children = count_child_processes().unwrap_or(0);
-    println!("Child processes during operation: {}", during_children);
+    tracing::info!("Child processes during operation: {}", during_children);
 
     // Close (Playwright has Drop implementation that should clean up)
     drop(playwright);
@@ -226,7 +231,7 @@ async fn test_process_cleanup() {
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
 
-    println!("Final child processes: {}", final_children);
+    tracing::info!("Final child processes: {}", final_children);
 
     // ASSERTION: Child processes should return to initial count
     assert!(
@@ -236,7 +241,7 @@ async fn test_process_cleanup() {
         initial_children
     );
 
-    println!("\n✓ Child processes cleaned up properly");
+    tracing::info!("\n✓ Child processes cleaned up properly");
 }
 
 // ============================================================================
@@ -246,7 +251,8 @@ async fn test_process_cleanup() {
 #[tokio::test]
 #[cfg(unix)]
 async fn test_no_zombie_processes() {
-    println!("\n=== Testing for Zombie Processes ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing for Zombie Processes ===\n");
 
     // Helper to count zombie processes
     fn count_zombies() -> Option<usize> {
@@ -264,7 +270,7 @@ async fn test_no_zombie_processes() {
 
     // Record initial zombie count
     let initial_zombies = count_zombies().unwrap_or(0);
-    println!("Initial zombies: {}", initial_zombies);
+    tracing::info!("Initial zombies: {}", initial_zombies);
 
     // Run multiple cycles
     const CYCLES: usize = 5;
@@ -304,7 +310,7 @@ async fn test_no_zombie_processes() {
         }
 
         if i % 2 == 1 {
-            println!("After cycle {}: {} zombies", i + 1, current_zombies);
+            tracing::debug!("After cycle {}: {} zombies", i + 1, current_zombies);
         }
 
         // ASSERTION: No new zombie processes should be created
@@ -317,7 +323,7 @@ async fn test_no_zombie_processes() {
         );
     }
 
-    println!("\n✓ No zombie processes detected");
+    tracing::info!("\n✓ No zombie processes detected");
 }
 
 // ============================================================================
@@ -326,13 +332,14 @@ async fn test_no_zombie_processes() {
 
 #[tokio::test]
 async fn test_multiple_server_cycles() {
-    println!("\n=== Testing Multiple Server Launch/Shutdown Cycles ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Multiple Server Launch/Shutdown Cycles ===\n");
 
     // Test that we can launch and shutdown Playwright server multiple times
     const CYCLES: usize = 5;
 
     for i in 0..CYCLES {
-        println!("Server cycle {}/{}", i + 1, CYCLES);
+        tracing::info!("Server cycle {}/{}", i + 1, CYCLES);
 
         // Launch Playwright
         let playwright = Playwright::launch()
@@ -362,7 +369,7 @@ async fn test_multiple_server_cycles() {
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 
-    println!("\n✓ Multiple server cycles handled successfully");
+    tracing::info!("\n✓ Multiple server cycles handled successfully");
 }
 
 // ============================================================================
@@ -371,7 +378,8 @@ async fn test_multiple_server_cycles() {
 
 #[tokio::test]
 async fn test_concurrent_browser_cleanup() {
-    println!("\n=== Testing Concurrent Browser Cleanup ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Concurrent Browser Cleanup ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -390,19 +398,19 @@ async fn test_concurrent_browser_cleanup() {
             .expect("Failed to launch browser");
 
         browsers.push(browser);
-        println!("Launched browser {}/{}", i + 1, BROWSER_COUNT);
+        tracing::info!("Launched browser {}/{}", i + 1, BROWSER_COUNT);
     }
 
     // Close all browsers
     for (i, browser) in browsers.into_iter().enumerate() {
         browser.close().await.expect("Failed to close browser");
-        println!("Closed browser {}/{}", i + 1, BROWSER_COUNT);
+        tracing::info!("Closed browser {}/{}", i + 1, BROWSER_COUNT);
     }
 
     // Wait for cleanup
     tokio::time::sleep(Duration::from_secs(1)).await;
 
-    println!("\n✓ Concurrent browsers cleaned up successfully");
+    tracing::info!("\n✓ Concurrent browsers cleaned up successfully");
 }
 
 // ============================================================================
@@ -411,7 +419,8 @@ async fn test_concurrent_browser_cleanup() {
 
 #[tokio::test]
 async fn test_resource_limit_stress() {
-    println!("\n=== Stress Test: Resource Limits ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Stress Test: Resource Limits ===\n");
 
     // Test that we handle resource limits gracefully
     // Create many pages rapidly to stress resource management
@@ -435,28 +444,28 @@ async fn test_resource_limit_stress() {
             Ok(page) => {
                 pages.push(page);
                 if i % 5 == 4 {
-                    println!("Created {} pages", i + 1);
+                    tracing::debug!("Created {} pages", i + 1);
                 }
             }
             Err(e) => {
-                println!("Failed to create page {}: {:?}", i + 1, e);
+                tracing::warn!("Failed to create page {}: {:?}", i + 1, e);
                 // This is acceptable under resource stress
                 break;
             }
         }
     }
 
-    println!("Successfully created {} pages", pages.len());
+    tracing::info!("Successfully created {} pages", pages.len());
 
     // Close all pages
     for (i, page) in pages.into_iter().enumerate() {
         let _ = page.close().await;
         if i % 5 == 4 {
-            println!("Closed {} pages", i + 1);
+            tracing::debug!("Closed {} pages", i + 1);
         }
     }
 
     browser.close().await.expect("Failed to close browser");
 
-    println!("\n✓ Resource stress test handled successfully");
+    tracing::info!("\n✓ Resource stress test handled successfully");
 }

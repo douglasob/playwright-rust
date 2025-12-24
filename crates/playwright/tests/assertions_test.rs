@@ -19,12 +19,15 @@ mod test_server;
 use playwright_rs::{expect, protocol::Playwright};
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // to_be_visible() Assertions
 // ============================================================================
 
 #[tokio::test]
 async fn test_to_be_visible_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -138,6 +141,7 @@ async fn test_to_be_visible_assertions() {
 
 #[tokio::test]
 async fn test_to_be_hidden_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -197,6 +201,7 @@ async fn test_to_be_hidden_assertions() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify assertions work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each assertion)

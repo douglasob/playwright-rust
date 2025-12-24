@@ -19,8 +19,11 @@ use playwright_rs::protocol::click::{ClickOptions, KeyboardModifier, MouseButton
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_click_with_button_options() {
+    common::init_tracing();
     // Combined test: All button options in one browser session
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -89,6 +92,7 @@ async fn test_click_with_button_options() {
 
 #[tokio::test]
 async fn test_click_with_modifiers() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -127,6 +131,7 @@ async fn test_click_with_modifiers() {
 
 #[tokio::test]
 async fn test_click_with_position() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -165,6 +170,7 @@ async fn test_click_with_position() {
 
 #[tokio::test]
 async fn test_click_with_force() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -199,6 +205,7 @@ async fn test_click_with_force() {
 
 #[tokio::test]
 async fn test_click_with_trial() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -236,6 +243,7 @@ async fn test_click_with_trial() {
 
 #[tokio::test]
 async fn test_dblclick_with_options() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -268,6 +276,7 @@ async fn test_dblclick_with_options() {
 
 #[tokio::test]
 async fn test_click_options_firefox() {
+    common::init_tracing();
     // Cross-browser test: Firefox
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -304,6 +313,7 @@ async fn test_click_options_firefox() {
 
 #[tokio::test]
 async fn test_click_options_webkit() {
+    common::init_tracing();
     // Cross-browser test: WebKit
     let server = TestServer::start().await;
     let playwright = Playwright::launch()

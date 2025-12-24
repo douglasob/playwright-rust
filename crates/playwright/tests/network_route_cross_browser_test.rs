@@ -18,12 +18,15 @@ use playwright_rs::protocol::Playwright;
 use std::sync::{Arc, Mutex};
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // Firefox Routing Methods
 // ============================================================================
 
 #[tokio::test]
 async fn test_route_firefox_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -58,7 +61,7 @@ async fn test_route_firefox_methods() {
 
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
 
-    println!("✓ Route abort works in Firefox");
+    tracing::info!("✓ Route abort works in Firefox");
 
     page1.close().await.expect("Failed to close page");
 
@@ -96,7 +99,7 @@ async fn test_route_firefox_methods() {
         "Route handler should have been called"
     );
 
-    println!("✓ Route continue works in Firefox");
+    tracing::info!("✓ Route continue works in Firefox");
 
     page2.close().await.expect("Failed to close page");
 
@@ -140,7 +143,7 @@ async fn test_route_firefox_methods() {
         "Catch-all handler should be called"
     );
 
-    println!("✓ Pattern matching works in Firefox");
+    tracing::info!("✓ Pattern matching works in Firefox");
 
     page3.close().await.expect("Failed to close page");
 
@@ -161,7 +164,7 @@ async fn test_route_firefox_methods() {
 
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
 
-    println!("✓ Error codes work in Firefox");
+    tracing::info!("✓ Error codes work in Firefox");
 
     page4.close().await.expect("Failed to close page");
 
@@ -175,6 +178,7 @@ async fn test_route_firefox_methods() {
 
 #[tokio::test]
 async fn test_route_webkit_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -209,7 +213,7 @@ async fn test_route_webkit_methods() {
 
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
 
-    println!("✓ Route abort works in WebKit");
+    tracing::info!("✓ Route abort works in WebKit");
 
     page1.close().await.expect("Failed to close page");
 
@@ -247,7 +251,7 @@ async fn test_route_webkit_methods() {
         "Route handler should have been called"
     );
 
-    println!("✓ Route continue works in WebKit");
+    tracing::info!("✓ Route continue works in WebKit");
 
     page2.close().await.expect("Failed to close page");
 
@@ -287,7 +291,7 @@ async fn test_route_webkit_methods() {
         captured_data
     );
 
-    println!("✓ Request access works in WebKit");
+    tracing::info!("✓ Request access works in WebKit");
 
     page3.close().await.expect("Failed to close page");
 
@@ -329,7 +333,7 @@ async fn test_route_webkit_methods() {
         "Should have allowed some requests"
     );
 
-    println!("✓ Conditional logic works in WebKit");
+    tracing::info!("✓ Conditional logic works in WebKit");
 
     page4.close().await.expect("Failed to close page");
 

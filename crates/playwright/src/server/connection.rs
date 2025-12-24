@@ -179,9 +179,14 @@ pub struct Request {
     /// Method name to invoke
     pub method: String,
     /// Method parameters as JSON object
+    #[serde(skip_serializing_if = "is_value_null")]
     pub params: Value,
     /// Metadata with timing and location information
     pub metadata: Metadata,
+}
+
+fn is_value_null(v: &Value) -> bool {
+    v.is_null()
 }
 
 /// Serde helpers for `Arc<str>` serialization
@@ -725,9 +730,11 @@ where
                 .ok_or_else(|| Error::ProtocolError("__create__ missing 'guid'".to_string()))?,
         );
 
-        eprintln!(
+        tracing::debug!(
             "DEBUG __create__: type={}, guid={}, parent_guid={}",
-            type_name, object_guid, event.guid
+            type_name,
+            object_guid,
+            event.guid
         );
 
         let initializer = event.params["initializer"].clone();
@@ -739,9 +746,10 @@ where
             .get(&event.guid)
             .cloned()
             .ok_or_else(|| {
-                eprintln!(
+                tracing::error!(
                     "DEBUG: Parent object not found for type={}, parent_guid={}",
-                    type_name, event.guid
+                    type_name,
+                    event.guid
                 );
                 Error::ProtocolError(format!("Parent object not found: {}", event.guid))
             })?;
@@ -764,9 +772,11 @@ where
         {
             Ok(obj) => obj,
             Err(e) => {
-                eprintln!(
+                tracing::error!(
                     "DEBUG: Failed to create object type={}, guid={}, error={}",
-                    type_name, object_guid, e
+                    type_name,
+                    object_guid,
+                    e
                 );
                 return Err(e);
             }
@@ -779,11 +789,11 @@ where
         // Register in parent
         parent_obj.add_child(Arc::clone(&object_guid), object);
 
-        eprintln!(
+        tracing::debug!(
             "DEBUG: Successfully created and registered object: type={}, guid={}",
-            type_name, object_guid
+            type_name,
+            object_guid
         );
-        tracing::debug!("Created object: type={}, guid={}", type_name, object_guid);
 
         Ok(())
     }

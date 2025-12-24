@@ -14,8 +14,11 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_query_selector_returns_element_handle() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -45,6 +48,7 @@ async fn test_query_selector_returns_element_handle() {
 
 #[tokio::test]
 async fn test_query_selector_returns_none_when_not_found() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -77,6 +81,7 @@ async fn test_query_selector_returns_none_when_not_found() {
 
 #[tokio::test]
 async fn test_query_selector_all_returns_multiple() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -107,6 +112,7 @@ async fn test_query_selector_all_returns_multiple() {
 
 #[tokio::test]
 async fn test_element_handle_screenshot() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -148,6 +154,7 @@ async fn test_element_handle_screenshot() {
 
 #[tokio::test]
 async fn test_locator_screenshot_via_element_handle() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -186,6 +193,7 @@ async fn test_locator_screenshot_via_element_handle() {
 
 #[tokio::test]
 async fn test_element_handle_screenshot_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -221,6 +229,7 @@ async fn test_element_handle_screenshot_firefox() {
 
 #[tokio::test]
 async fn test_element_handle_screenshot_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

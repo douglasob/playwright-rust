@@ -15,6 +15,7 @@
 // - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
 // - Expected speedup: ~73% (15 tests → 4 tests)
 
+mod common;
 mod test_server;
 
 use playwright_rs::{expect, protocol::Playwright};
@@ -26,6 +27,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_to_have_text_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -112,6 +114,7 @@ async fn test_to_have_text_assertions() {
 
 #[tokio::test]
 async fn test_to_contain_text_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -157,6 +160,7 @@ async fn test_to_contain_text_assertions() {
 
 #[tokio::test]
 async fn test_to_have_value_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -232,6 +236,7 @@ async fn test_cross_browser_smoke() {
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each assertion)
 
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

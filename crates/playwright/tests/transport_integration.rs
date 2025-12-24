@@ -10,15 +10,18 @@ use playwright_rs::server::{playwright_server::PlaywrightServer, transport::Pipe
 use serde_json::json;
 use tokio::time::{timeout, Duration};
 
+mod common;
+
 /// Test that we can launch a real Playwright server and create a transport
 #[tokio::test]
 async fn test_transport_with_real_server() {
+    common::init_tracing();
     // Launch Playwright server
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test: Could not launch Playwright server: {}", e);
-            eprintln!("This is expected if Node.js or Playwright driver is not available");
+            tracing::warn!("Skipping test: Could not launch Playwright server: {}", e);
+            tracing::warn!("This is expected if Node.js or Playwright driver is not available");
             return;
         }
     };
@@ -67,14 +70,14 @@ async fn test_transport_with_real_server() {
     match result {
         Ok(Ok(transport_result)) => {
             // Transport exited - could be Ok or Err depending on timing
-            eprintln!("Transport exited: {:?}", transport_result);
+            tracing::warn!("Transport exited: {:?}", transport_result);
         }
         Ok(Err(e)) => {
             panic!("Task panicked: {:?}", e);
         }
         Err(_) => {
             // Timeout is acceptable - transport might still be waiting
-            eprintln!("Transport still running after server kill (acceptable)");
+            tracing::warn!("Transport still running after server kill (acceptable)");
         }
     }
 }
@@ -82,11 +85,12 @@ async fn test_transport_with_real_server() {
 /// Test that transport can send a message to real server without panicking
 #[tokio::test]
 async fn test_send_message_to_real_server() {
+    common::init_tracing();
     // Launch Playwright server
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test: Could not launch Playwright server: {}", e);
+            tracing::warn!("Skipping test: Could not launch Playwright server: {}", e);
             return;
         }
     };
@@ -118,10 +122,11 @@ async fn test_send_message_to_real_server() {
 /// Test that transport handles server crash gracefully
 #[tokio::test]
 async fn test_transport_handles_server_crash() {
+    common::init_tracing();
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Skipping test: Could not launch Playwright server: {}", e);
+            tracing::warn!("Skipping test: Could not launch Playwright server: {}", e);
             return;
         }
     };

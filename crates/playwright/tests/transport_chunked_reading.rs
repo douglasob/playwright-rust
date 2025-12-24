@@ -11,9 +11,12 @@
 use serde_json::json;
 use tokio::io::AsyncWriteExt;
 
+mod common;
+
 /// Test that small messages (< 32KB) are handled correctly
 #[tokio::test]
 async fn test_small_message_reading() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(64 * 1024);
     let (stdout_read, mut stdout_write) = tokio::io::duplex(64 * 1024);
 
@@ -54,6 +57,7 @@ async fn test_small_message_reading() {
 /// Test that messages exactly 32KB are handled correctly
 #[tokio::test]
 async fn test_exactly_buffer_size_message() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(128 * 1024);
     let (stdout_read, mut stdout_write) = tokio::io::duplex(128 * 1024);
 
@@ -100,6 +104,7 @@ async fn test_exactly_buffer_size_message() {
 /// Test that messages just over 32KB require chunked reading
 #[tokio::test]
 async fn test_just_over_buffer_size_message() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(128 * 1024);
     let (stdout_read, mut stdout_write) = tokio::io::duplex(128 * 1024);
 
@@ -139,6 +144,7 @@ async fn test_just_over_buffer_size_message() {
 /// Test that very large messages (> 100KB) are handled correctly
 #[tokio::test]
 async fn test_very_large_message_chunked_reading() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(1024 * 1024); // 1MB buffer
     let (stdout_read, mut stdout_write) = tokio::io::duplex(1024 * 1024);
 
@@ -179,6 +185,7 @@ async fn test_very_large_message_chunked_reading() {
 /// Test that multiple large messages in sequence are handled correctly
 #[tokio::test]
 async fn test_multiple_large_messages_in_sequence() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(2 * 1024 * 1024); // 2MB buffer
     let (stdout_read, mut stdout_write) = tokio::io::duplex(2 * 1024 * 1024);
 
@@ -229,6 +236,7 @@ async fn test_multiple_large_messages_in_sequence() {
 /// Test that chunked reading handles odd message sizes correctly
 #[tokio::test]
 async fn test_odd_sized_messages() {
+    common::init_tracing();
     let (_stdin_read, stdin_write) = tokio::io::duplex(512 * 1024);
     let (stdout_read, mut stdout_write) = tokio::io::duplex(512 * 1024);
 

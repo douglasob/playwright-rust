@@ -23,12 +23,15 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // Keyboard Tests
 // ============================================================================
 
 #[tokio::test]
 async fn test_keyboard_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -153,6 +156,7 @@ async fn test_keyboard_methods() {
 
 #[tokio::test]
 async fn test_mouse_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -225,6 +229,7 @@ async fn test_mouse_methods() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify keyboard and mouse work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each method)

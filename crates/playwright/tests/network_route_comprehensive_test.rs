@@ -14,8 +14,11 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_route_abort_blocks_fetch() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -56,6 +59,7 @@ async fn test_route_abort_blocks_fetch() {
 
 #[tokio::test]
 async fn test_route_continue_allows_fetch() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -90,6 +94,7 @@ async fn test_route_continue_allows_fetch() {
 
 #[tokio::test]
 async fn test_route_conditional_abort() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -152,6 +157,7 @@ async fn test_route_conditional_abort() {
 
 #[tokio::test]
 async fn test_route_pattern_specificity() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -217,6 +223,7 @@ async fn test_route_pattern_specificity() {
 
 #[tokio::test]
 async fn test_route_abort_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -255,6 +262,7 @@ async fn test_route_abort_firefox() {
 
 #[tokio::test]
 async fn test_route_continue_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

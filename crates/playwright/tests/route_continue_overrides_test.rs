@@ -13,8 +13,11 @@
 use playwright_rs::protocol::{ContinueOptions, Playwright};
 use std::collections::HashMap;
 
+mod common;
+
 #[tokio::test]
 async fn test_route_continue_with_headers() {
+    common::init_tracing();
     // Test modifying headers when continuing a route
     let playwright = Playwright::launch()
         .await
@@ -48,6 +51,7 @@ async fn test_route_continue_with_headers() {
 
 #[tokio::test]
 async fn test_route_continue_with_method() {
+    common::init_tracing();
     // Test changing HTTP method when continuing a route
     let playwright = Playwright::launch()
         .await
@@ -90,6 +94,7 @@ async fn test_route_continue_with_method() {
 
 #[tokio::test]
 async fn test_route_continue_with_post_data() {
+    common::init_tracing();
     // Test adding POST data when continuing a route
     let playwright = Playwright::launch()
         .await
@@ -122,6 +127,7 @@ async fn test_route_continue_with_post_data() {
 
 #[tokio::test]
 async fn test_route_continue_with_post_data_bytes() {
+    common::init_tracing();
     // Test adding POST data as bytes when continuing a route
     let playwright = Playwright::launch()
         .await
@@ -154,6 +160,7 @@ async fn test_route_continue_with_post_data_bytes() {
 
 #[tokio::test]
 async fn test_route_continue_with_url() {
+    common::init_tracing();
     // Test changing URL when continuing a route (same protocol)
     let playwright = Playwright::launch()
         .await
@@ -186,6 +193,7 @@ async fn test_route_continue_with_url() {
 
 #[tokio::test]
 async fn test_route_continue_with_combined_overrides() {
+    common::init_tracing();
     // Test multiple overrides combined
     let playwright = Playwright::launch()
         .await
@@ -224,6 +232,7 @@ async fn test_route_continue_with_combined_overrides() {
 
 #[tokio::test]
 async fn test_route_continue_no_overrides() {
+    common::init_tracing();
     // Test that continue without overrides still works
     let playwright = Playwright::launch()
         .await

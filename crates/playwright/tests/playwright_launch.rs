@@ -2,8 +2,11 @@
 
 use playwright_rs::protocol::Playwright;
 
+mod common;
+
 #[tokio::test]
 async fn test_playwright_launch() {
+    common::init_tracing();
     // Launch Playwright
     let playwright = Playwright::launch()
         .await
@@ -22,10 +25,10 @@ async fn test_playwright_launch() {
     assert_eq!(webkit.name(), "webkit");
     assert!(!webkit.executable_path().is_empty());
 
-    println!("✅ Playwright launched successfully!");
-    println!("   Chromium: {}", chromium.executable_path());
-    println!("   Firefox: {}", firefox.executable_path());
-    println!("   WebKit: {}", webkit.executable_path());
+    tracing::info!("✅ Playwright launched successfully!");
+    tracing::info!("   Chromium: {}", chromium.executable_path());
+    tracing::info!("   Firefox: {}", firefox.executable_path());
+    tracing::info!("   WebKit: {}", webkit.executable_path());
 }
 
 /// Test that multiple Playwright instances can be created
@@ -34,6 +37,7 @@ async fn test_playwright_launch() {
 /// each with their own connection to separate server processes.
 #[tokio::test]
 async fn test_multiple_playwright_instances() {
+    common::init_tracing();
     // Launch first instance
     let playwright1 = Playwright::launch()
         .await
@@ -50,7 +54,7 @@ async fn test_multiple_playwright_instances() {
 
     // Note: In Phase 1, we don't have explicit cleanup yet
     // Both server processes will be killed when the test exits
-    println!("✅ Multiple Playwright instances created successfully!");
+    tracing::info!("✅ Multiple Playwright instances created successfully!");
 }
 
 /// Test error handling when driver is not found
@@ -69,6 +73,7 @@ async fn test_multiple_playwright_instances() {
 /// test infrastructure (test fixtures, isolated environments, etc.)
 #[tokio::test]
 async fn test_launch_with_driver_not_found() {
+    common::init_tracing();
     // For Phase 1, we verify that the error types exist and are properly defined
     // The actual ServerNotFound error is tested in server.rs unit tests
 
@@ -84,8 +89,8 @@ async fn test_launch_with_driver_not_found() {
     // 2. Could interfere with other parallel tests
     // 3. The error path is already tested in server.rs unit tests
 
-    println!("✅ ServerNotFound error type verified!");
-    println!("   Full integration test deferred to Phase 2");
+    tracing::info!("✅ ServerNotFound error type verified!");
+    tracing::info!("   Full integration test deferred to Phase 2");
 }
 
 /// Test graceful cleanup
@@ -98,6 +103,7 @@ async fn test_launch_with_driver_not_found() {
 /// will be implemented in Phase 2 along with Browser lifecycle management.
 #[tokio::test]
 async fn test_graceful_cleanup_on_drop() {
+    common::init_tracing();
     // Create a Playwright instance in a scope
     {
         let playwright = Playwright::launch()
@@ -116,5 +122,5 @@ async fn test_graceful_cleanup_on_drop() {
 
     assert_eq!(playwright2.chromium().name(), "chromium");
 
-    println!("✅ Graceful cleanup verified - can create new instance after drop!");
+    tracing::info!("✅ Graceful cleanup verified - can create new instance after drop!");
 }

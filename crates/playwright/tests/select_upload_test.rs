@@ -14,6 +14,7 @@
 // - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
 // - Expected speedup: ~69% (13 tests → 4 tests)
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::{Playwright, SelectOption};
@@ -27,6 +28,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_select_option_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -83,6 +85,7 @@ async fn test_select_option_methods() {
 
 #[tokio::test]
 async fn test_select_multiple_options() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -127,6 +130,7 @@ async fn test_select_multiple_options() {
 
 #[tokio::test]
 async fn test_file_upload_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -212,6 +216,7 @@ async fn test_cross_browser_smoke() {
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each feature)
 
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

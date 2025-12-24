@@ -12,8 +12,11 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_add_init_script_on_context() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -79,6 +82,7 @@ async fn test_add_init_script_on_context() {
 
 #[tokio::test]
 async fn test_add_init_script_multiple_pages() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -168,6 +172,7 @@ async fn test_add_init_script_multiple_pages() {
 
 #[tokio::test]
 async fn test_add_init_script_on_page() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -223,6 +228,7 @@ async fn test_add_init_script_on_page() {
 
 #[tokio::test]
 async fn test_add_init_script_chromium() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -263,6 +269,7 @@ async fn test_add_init_script_chromium() {
 
 #[tokio::test]
 async fn test_add_init_script_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -303,6 +310,7 @@ async fn test_add_init_script_firefox() {
 
 #[tokio::test]
 async fn test_add_init_script_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

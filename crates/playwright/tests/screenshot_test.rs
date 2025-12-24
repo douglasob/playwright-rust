@@ -10,6 +10,7 @@
 // - page.screenshot() with type (png/jpeg)
 // - locator.screenshot() captures element
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::Playwright;
@@ -17,6 +18,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_page_screenshot_returns_bytes() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -48,6 +50,7 @@ async fn test_page_screenshot_returns_bytes() {
 
 #[tokio::test]
 async fn test_page_screenshot_saves_to_file() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -91,6 +94,7 @@ async fn test_page_screenshot_saves_to_file() {
 
 #[tokio::test]
 async fn test_page_screenshot_full_page() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -123,6 +127,7 @@ async fn test_page_screenshot_full_page() {
 
 #[tokio::test]
 async fn test_locator_screenshot() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -157,6 +162,7 @@ async fn test_locator_screenshot() {
 
 #[tokio::test]
 async fn test_screenshot_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -186,6 +192,7 @@ async fn test_screenshot_firefox() {
 
 #[tokio::test]
 async fn test_screenshot_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

@@ -7,6 +7,8 @@
 use playwright_rs::server::{playwright_server::PlaywrightServer, transport::PipeTransport};
 use std::time::Duration;
 
+mod common;
+
 /// Test that server shutdown doesn't hang on Windows
 ///
 /// This test launches a Playwright server and verifies that:
@@ -16,11 +18,12 @@ use std::time::Duration;
 /// 4. The process terminates within a reasonable timeout
 #[tokio::test]
 async fn test_server_shutdown_no_hang() {
+    common::init_tracing();
     // Launch server
     let server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(_) => {
-            eprintln!("Skipping test - Playwright not available");
+            tracing::warn!("Skipping test - Playwright not available");
             return;
         }
     };
@@ -45,13 +48,14 @@ async fn test_server_shutdown_no_hang() {
 /// and don't accumulate hanging processes or leaked file handles.
 #[tokio::test]
 async fn test_repeated_server_lifecycle() {
+    common::init_tracing();
     for i in 0..3 {
-        eprintln!("Iteration {}", i + 1);
+        tracing::debug!("Iteration {}", i + 1);
 
         let server = match PlaywrightServer::launch().await {
             Ok(s) => s,
             Err(_) => {
-                eprintln!("Skipping test - Playwright not available");
+                tracing::warn!("Skipping test - Playwright not available");
                 return;
             }
         };
@@ -74,10 +78,11 @@ async fn test_repeated_server_lifecycle() {
 /// than graceful shutdown.
 #[tokio::test]
 async fn test_server_kill_no_hang() {
+    common::init_tracing();
     let server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(_) => {
-            eprintln!("Skipping test - Playwright not available");
+            tracing::warn!("Skipping test - Playwright not available");
             return;
         }
     };
@@ -101,10 +106,11 @@ async fn test_server_kill_no_hang() {
 /// and used in a transport layer.
 #[tokio::test]
 async fn test_connection_cleanup_no_hang() {
+    common::init_tracing();
     let mut server = match PlaywrightServer::launch().await {
         Ok(s) => s,
         Err(_) => {
-            eprintln!("Skipping test - Playwright not available");
+            tracing::warn!("Skipping test - Playwright not available");
             return;
         }
     };

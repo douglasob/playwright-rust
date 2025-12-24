@@ -9,6 +9,8 @@
 
 use playwright_rs::protocol::Playwright;
 
+mod common;
+
 /// Test that a Browser object is created when the server sends a Browser __create__ message
 ///
 /// Verifies the complete flow:
@@ -19,6 +21,7 @@ use playwright_rs::protocol::Playwright;
 /// This test verifies the end-to-end Browser creation flow.
 #[tokio::test]
 async fn test_browser_object_creation_via_launch() {
+    common::init_tracing();
     // Initialize Playwright
     let playwright = Playwright::launch()
         .await
@@ -40,7 +43,7 @@ async fn test_browser_object_creation_via_launch() {
     // Verify Browser object fields
     assert_eq!(browser.name(), "chromium");
     assert!(!browser.version().is_empty());
-    println!(
+    tracing::info!(
         "✅ Browser created: {} version {}",
         browser.name(),
         browser.version()
@@ -49,7 +52,7 @@ async fn test_browser_object_creation_via_launch() {
     // Cleanup
     browser.close().await.expect("Failed to close browser");
 
-    println!("✅ Slice 4 complete: Browser can be launched, used, and closed");
+    tracing::info!("✅ Slice 4 complete: Browser can be launched, used, and closed");
 }
 
 /// Test that Browser object has correct structure
@@ -58,6 +61,7 @@ async fn test_browser_object_creation_via_launch() {
 /// This test passes as soon as Browser is defined and added to the object factory.
 #[test]
 fn test_browser_type_exists() {
+    common::init_tracing();
     // This is a compile-time test - if Browser doesn't exist or doesn't
     // implement ChannelOwner, this won't compile
     use playwright_rs::protocol::Browser;
@@ -72,5 +76,5 @@ fn test_browser_type_exists() {
     fn assert_channel_owner<T: ChannelOwner + 'static>() {}
     assert_channel_owner::<Browser>();
 
-    println!("✅ Browser struct exists and implements ChannelOwner");
+    tracing::info!("✅ Browser struct exists and implements ChannelOwner");
 }

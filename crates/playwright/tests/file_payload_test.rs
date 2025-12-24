@@ -11,8 +11,11 @@
 
 use playwright_rs::protocol::{FilePayload, Playwright};
 
+mod common;
+
 #[tokio::test]
 async fn test_file_payload_basic() {
+    common::init_tracing();
     // Test uploading a file using FilePayload
     let playwright = Playwright::launch()
         .await
@@ -55,6 +58,7 @@ async fn test_file_payload_basic() {
 
 #[tokio::test]
 async fn test_file_payload_multiple() {
+    common::init_tracing();
     // Test uploading multiple files using FilePayload
     let playwright = Playwright::launch()
         .await
@@ -103,6 +107,7 @@ async fn test_file_payload_multiple() {
 
 #[tokio::test]
 async fn test_file_payload_custom_mime_type() {
+    common::init_tracing();
     // Test uploading a file with custom MIME type
     let playwright = Playwright::launch()
         .await

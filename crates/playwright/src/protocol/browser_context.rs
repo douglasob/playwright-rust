@@ -196,6 +196,15 @@ impl BrowserContext {
             .send_no_result("close", serde_json::json!({}))
             .await
     }
+
+    /// Pauses the browser context.
+    ///
+    /// This pauses the execution of all pages in the context.
+    pub async fn pause(&self) -> Result<()> {
+        self.channel()
+            .send_no_result("pause", serde_json::Value::Null)
+            .await
+    }
 }
 
 impl ChannelOwner for BrowserContext {

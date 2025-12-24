@@ -4,8 +4,11 @@
 
 use playwright_rs::protocol::Playwright;
 
+mod common;
+
 #[tokio::test]
 async fn test_context_new_page() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -22,7 +25,7 @@ async fn test_context_new_page() {
     let page = context.new_page().await.expect("Failed to create page");
 
     // Verify page was created
-    println!("✓ Page created");
+    tracing::info!("✓ Page created");
 
     // Page should initially be at about:blank
     assert_eq!(page.url(), "about:blank");
@@ -35,6 +38,7 @@ async fn test_context_new_page() {
 
 #[tokio::test]
 async fn test_browser_new_page_convenience() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -48,7 +52,7 @@ async fn test_browser_new_page_convenience() {
     // Create page directly from browser (creates default context)
     let page = browser.new_page().await.expect("Failed to create page");
 
-    println!("✓ Page created via browser.new_page()");
+    tracing::info!("✓ Page created via browser.new_page()");
 
     // Should be at about:blank
     assert_eq!(page.url(), "about:blank");
@@ -60,6 +64,7 @@ async fn test_browser_new_page_convenience() {
 
 #[tokio::test]
 async fn test_multiple_pages_in_context() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -79,7 +84,7 @@ async fn test_multiple_pages_in_context() {
     let page1 = context.new_page().await.expect("Failed to create page 1");
     let page2 = context.new_page().await.expect("Failed to create page 2");
 
-    println!("✓ Created 2 pages in same context");
+    tracing::info!("✓ Created 2 pages in same context");
 
     // Each should be at about:blank
     assert_eq!(page1.url(), "about:blank");
@@ -94,6 +99,7 @@ async fn test_multiple_pages_in_context() {
 
 #[tokio::test]
 async fn test_page_close() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -109,7 +115,7 @@ async fn test_page_close() {
     // Close page
     page.close().await.expect("Failed to close page");
 
-    println!("✓ Page closed successfully");
+    tracing::info!("✓ Page closed successfully");
 
     // Cleanup
     browser.close().await.expect("Failed to close browser");

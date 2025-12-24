@@ -15,6 +15,7 @@
 // - Removed redundant cross-browser tests (Rust bindings use same protocol for all browsers)
 // - Expected speedup: ~70% (85s → 25s for comprehensive coverage)
 
+mod common;
 mod test_server;
 
 use playwright_rs::{expect, protocol::Playwright};
@@ -26,6 +27,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_button_state_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -111,6 +113,7 @@ async fn test_button_state_assertions() {
 
 #[tokio::test]
 async fn test_checkbox_state_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -197,6 +200,7 @@ async fn test_checkbox_state_assertions() {
 
 #[tokio::test]
 async fn test_editable_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -260,6 +264,7 @@ async fn test_editable_assertions() {
 
 #[tokio::test]
 async fn test_focus_assertions() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -349,6 +354,7 @@ async fn test_cross_browser_smoke() {
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each assertion)
 
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

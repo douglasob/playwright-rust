@@ -15,6 +15,7 @@
 // - Consistent memory usage patterns
 // - No OOM (Out of Memory) errors
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::Playwright;
@@ -89,11 +90,12 @@ fn get_process_memory_mb() -> Option<f64> {
 
 #[tokio::test]
 async fn test_no_memory_leak_browser_cycles() {
-    println!("\n=== Testing Memory Leaks: Browser Launch/Close Cycles ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Memory Leaks: Browser Launch/Close Cycles ===\n");
 
     // Record initial memory
     let initial_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("Initial memory: {:.2} MB", initial_memory);
+    tracing::info!("Initial memory: {:.2} MB", initial_memory);
 
     // Run 100 browser launch/close cycles
     const CYCLES: usize = 100;
@@ -126,15 +128,16 @@ async fn test_no_memory_leak_browser_cycles() {
         if i % 10 == 9 {
             if let Some(mem) = get_process_memory_mb() {
                 memory_samples.push(mem);
-                println!("After {} cycles: {:.2} MB", i + 1, mem);
+                tracing::debug!("After {} cycles: {:.2} MB", i + 1, mem);
             }
         }
     }
 
     // Final memory reading
     let final_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("\nFinal memory: {:.2} MB", final_memory);
-    println!("Memory growth: {:.2} MB", final_memory - initial_memory);
+    tracing::info!("\nFinal memory: {:.2} MB", final_memory);
+
+    tracing::info!("Memory growth: {:.2} MB", final_memory - initial_memory);
 
     // Analysis: Check for memory leak
     if memory_samples.len() >= 2 {
@@ -149,9 +152,9 @@ async fn test_no_memory_leak_browser_cycles() {
 
         let memory_growth_rate = second_half_avg - first_half_avg;
 
-        println!("First half average: {:.2} MB", first_half_avg);
-        println!("Second half average: {:.2} MB", second_half_avg);
-        println!("Growth rate: {:.2} MB", memory_growth_rate);
+        tracing::info!("First half average: {:.2} MB", first_half_avg);
+        tracing::info!("Second half average: {:.2} MB", second_half_avg);
+        tracing::info!("Growth rate: {:.2} MB", memory_growth_rate);
 
         // ASSERTION: Memory should not grow significantly (allow 50MB growth for normal variance)
         // This is the RED phase - we expect this might fail initially
@@ -162,7 +165,7 @@ async fn test_no_memory_leak_browser_cycles() {
         );
     }
 
-    println!("\n✓ No memory leak detected in browser cycles");
+    tracing::info!("\n✓ No memory leak detected in browser cycles");
 }
 
 // ============================================================================
@@ -171,7 +174,8 @@ async fn test_no_memory_leak_browser_cycles() {
 
 #[tokio::test]
 async fn test_no_memory_leak_page_cycles() {
-    println!("\n=== Testing Memory Leaks: Page Creation/Destruction ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Memory Leaks: Page Creation/Destruction ===\n");
 
     // Launch Playwright and browser once
     let playwright = Playwright::launch()
@@ -185,7 +189,7 @@ async fn test_no_memory_leak_page_cycles() {
 
     // Record initial memory
     let initial_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("Initial memory: {:.2} MB", initial_memory);
+    tracing::info!("Initial memory: {:.2} MB", initial_memory);
 
     // Run 50 page creation/destruction cycles
     const CYCLES: usize = 50;
@@ -205,15 +209,16 @@ async fn test_no_memory_leak_page_cycles() {
         if i % 5 == 4 {
             if let Some(mem) = get_process_memory_mb() {
                 memory_samples.push(mem);
-                println!("After {} page cycles: {:.2} MB", i + 1, mem);
+                tracing::debug!("After {} page cycles: {:.2} MB", i + 1, mem);
             }
         }
     }
 
     // Final memory reading
     let final_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("\nFinal memory: {:.2} MB", final_memory);
-    println!("Memory growth: {:.2} MB", final_memory - initial_memory);
+    tracing::info!("\nFinal memory: {:.2} MB", final_memory);
+
+    tracing::info!("Memory growth: {:.2} MB", final_memory - initial_memory);
 
     // Analysis: Check for memory leak
     if memory_samples.len() >= 2 {
@@ -228,9 +233,9 @@ async fn test_no_memory_leak_page_cycles() {
 
         let memory_growth_rate = second_half_avg - first_half_avg;
 
-        println!("First half average: {:.2} MB", first_half_avg);
-        println!("Second half average: {:.2} MB", second_half_avg);
-        println!("Growth rate: {:.2} MB", memory_growth_rate);
+        tracing::info!("First half average: {:.2} MB", first_half_avg);
+        tracing::info!("Second half average: {:.2} MB", second_half_avg);
+        tracing::info!("Growth rate: {:.2} MB", memory_growth_rate);
 
         // ASSERTION: Memory should not grow significantly (allow 30MB growth for pages)
         assert!(
@@ -242,7 +247,7 @@ async fn test_no_memory_leak_page_cycles() {
 
     browser.close().await.expect("Failed to close browser");
 
-    println!("\n✓ No memory leak detected in page cycles");
+    tracing::info!("\n✓ No memory leak detected in page cycles");
 }
 
 // ============================================================================
@@ -251,7 +256,8 @@ async fn test_no_memory_leak_page_cycles() {
 
 #[tokio::test]
 async fn test_no_memory_leak_context_cycles() {
-    println!("\n=== Testing Memory Leaks: Context Creation/Destruction ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Memory Leaks: Context Creation/Destruction ===\n");
 
     // Launch Playwright and browser once
     let playwright = Playwright::launch()
@@ -265,7 +271,7 @@ async fn test_no_memory_leak_context_cycles() {
 
     // Record initial memory
     let initial_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("Initial memory: {:.2} MB", initial_memory);
+    tracing::info!("Initial memory: {:.2} MB", initial_memory);
 
     // Run 50 context creation/destruction cycles
     const CYCLES: usize = 50;
@@ -292,15 +298,16 @@ async fn test_no_memory_leak_context_cycles() {
         if i % 5 == 4 {
             if let Some(mem) = get_process_memory_mb() {
                 memory_samples.push(mem);
-                println!("After {} context cycles: {:.2} MB", i + 1, mem);
+                tracing::debug!("After {} context cycles: {:.2} MB", i + 1, mem);
             }
         }
     }
 
     // Final memory reading
     let final_memory = get_process_memory_mb().unwrap_or(0.0);
-    println!("\nFinal memory: {:.2} MB", final_memory);
-    println!("Memory growth: {:.2} MB", final_memory - initial_memory);
+    tracing::info!("\nFinal memory: {:.2} MB", final_memory);
+
+    tracing::info!("Memory growth: {:.2} MB", final_memory - initial_memory);
 
     // Analysis: Check for memory leak
     if memory_samples.len() >= 2 {
@@ -315,9 +322,9 @@ async fn test_no_memory_leak_context_cycles() {
 
         let memory_growth_rate = second_half_avg - first_half_avg;
 
-        println!("First half average: {:.2} MB", first_half_avg);
-        println!("Second half average: {:.2} MB", second_half_avg);
-        println!("Growth rate: {:.2} MB", memory_growth_rate);
+        tracing::info!("First half average: {:.2} MB", first_half_avg);
+        tracing::info!("Second half average: {:.2} MB", second_half_avg);
+        tracing::info!("Growth rate: {:.2} MB", memory_growth_rate);
 
         // ASSERTION: Memory should not grow significantly (allow 30MB growth for contexts)
         assert!(
@@ -329,7 +336,7 @@ async fn test_no_memory_leak_context_cycles() {
 
     browser.close().await.expect("Failed to close browser");
 
-    println!("\n✓ No memory leak detected in context cycles");
+    tracing::info!("\n✓ No memory leak detected in context cycles");
 }
 
 // ============================================================================
@@ -338,7 +345,8 @@ async fn test_no_memory_leak_context_cycles() {
 
 #[tokio::test]
 async fn test_rapid_browser_creation() {
-    println!("\n=== Stress Test: Rapid Browser Creation ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Stress Test: Rapid Browser Creation ===\n");
 
     // Test that we can rapidly create and destroy browsers without resource exhaustion
     let playwright = Playwright::launch()
@@ -357,9 +365,9 @@ async fn test_rapid_browser_creation() {
         browser.close().await.expect("Failed to close browser");
 
         if i % 5 == 4 {
-            println!("Completed {} rapid cycles", i + 1);
+            tracing::debug!("Completed {} rapid cycles", i + 1);
         }
     }
 
-    println!("\n✓ Rapid browser creation handled successfully");
+    tracing::info!("\n✓ Rapid browser creation handled successfully");
 }

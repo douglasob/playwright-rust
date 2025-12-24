@@ -13,6 +13,8 @@ mod test_server;
 use playwright_rs::protocol::{FulfillOptions, Playwright};
 use test_server::TestServer;
 
+mod common;
+
 /// Test: route.fulfill() body content is NOT transmitted (Playwright limitation)
 ///
 /// This test documents that Playwright 1.49.0-1.56.1 doesn't transmit fulfilled
@@ -20,6 +22,7 @@ use test_server::TestServer;
 /// fixed the issue and we should update our documentation.
 #[tokio::test]
 async fn test_route_fulfill_main_document() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -111,6 +114,7 @@ async fn test_route_fulfill_main_document() {
 /// Verify that status codes are correctly transmitted even though body isn't.
 #[tokio::test]
 async fn test_route_fulfill_main_document_with_status() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -181,6 +185,7 @@ async fn test_route_fulfill_main_document_with_status() {
 /// Cross-browser test: document that Firefox also has the body transmission issue.
 #[tokio::test]
 async fn test_route_fulfill_main_document_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -250,6 +255,7 @@ async fn test_route_fulfill_main_document_firefox() {
 /// Cross-browser test: document that WebKit also has the body transmission issue.
 #[tokio::test]
 async fn test_route_fulfill_main_document_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -321,6 +327,7 @@ async fn test_route_fulfill_main_document_webkit() {
 /// what works and what doesn't in the current Playwright version.
 #[tokio::test]
 async fn test_route_fulfill_fetch_still_works() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

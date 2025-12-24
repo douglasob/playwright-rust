@@ -17,6 +17,7 @@
 // - Graceful error recovery
 // - No resource leaks on error paths
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::{GotoOptions, Playwright};
@@ -29,7 +30,8 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_graceful_shutdown_on_drop() {
-    println!("\n=== Testing Graceful Shutdown: Drop Cleanup ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Graceful Shutdown: Drop Cleanup ===\n");
 
     // Test that Playwright cleans up properly when dropped
     {
@@ -46,8 +48,8 @@ async fn test_graceful_shutdown_on_drop() {
         let page = browser.new_page().await.expect("Failed to create page");
         let _ = page.goto("about:blank", None).await;
 
-        println!("Playwright, browser, and page created");
-        println!("Dropping all objects...");
+        tracing::info!("Playwright, browser, and page created");
+        tracing::info!("Dropping all objects...");
 
         // Explicit drops to test cleanup order
         drop(page);
@@ -58,7 +60,7 @@ async fn test_graceful_shutdown_on_drop() {
     // Wait for cleanup to complete
     tokio::time::sleep(Duration::from_secs(1)).await;
 
-    println!("\n✓ Graceful shutdown on drop completed");
+    tracing::info!("\n✓ Graceful shutdown on drop completed");
 }
 
 // ============================================================================
@@ -67,7 +69,8 @@ async fn test_graceful_shutdown_on_drop() {
 
 #[tokio::test]
 async fn test_graceful_shutdown_explicit_close() {
-    println!("\n=== Testing Graceful Shutdown: Explicit Close ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Graceful Shutdown: Explicit Close ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -83,18 +86,18 @@ async fn test_graceful_shutdown_explicit_close() {
     let _ = page.goto("about:blank", None).await;
 
     // Close explicitly in reverse order
-    println!("Closing page...");
+    tracing::info!("Closing page...");
     page.close().await.expect("Failed to close page");
 
-    println!("Closing browser...");
+    tracing::info!("Closing browser...");
     browser.close().await.expect("Failed to close browser");
 
-    println!("Dropping playwright...");
+    tracing::info!("Dropping playwright...");
     drop(playwright);
 
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    println!("\n✓ Explicit close completed successfully");
+    tracing::info!("\n✓ Explicit close completed successfully");
 }
 
 // ============================================================================
@@ -103,7 +106,8 @@ async fn test_graceful_shutdown_explicit_close() {
 
 #[tokio::test]
 async fn test_graceful_shutdown_multiple_browsers() {
-    println!("\n=== Testing Graceful Shutdown: Multiple Browsers ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Graceful Shutdown: Multiple Browsers ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -122,21 +126,21 @@ async fn test_graceful_shutdown_multiple_browsers() {
         .await
         .expect("Failed to launch browser 2");
 
-    println!("Two browsers launched");
+    tracing::info!("Two browsers launched");
 
     // Close both
-    println!("Closing browser 1...");
+    tracing::info!("Closing browser 1...");
     browser1.close().await.expect("Failed to close browser 1");
 
-    println!("Closing browser 2...");
+    tracing::info!("Closing browser 2...");
     browser2.close().await.expect("Failed to close browser 2");
 
-    println!("Dropping playwright...");
+    tracing::info!("Dropping playwright...");
     drop(playwright);
 
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    println!("\n✓ Multiple browsers shut down successfully");
+    tracing::info!("\n✓ Multiple browsers shut down successfully");
 }
 
 // ============================================================================
@@ -145,7 +149,8 @@ async fn test_graceful_shutdown_multiple_browsers() {
 
 #[tokio::test]
 async fn test_error_recovery_network_timeout() {
-    println!("\n=== Testing Error Recovery: Network Timeout ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Network Timeout ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -163,7 +168,8 @@ async fn test_error_recovery_network_timeout() {
     let result = page.goto("http://10.255.255.1:9999/", Some(options)).await;
 
     assert!(result.is_err(), "Expected timeout error");
-    println!("Timeout error occurred (expected)");
+    assert!(result.is_err(), "Expected timeout error");
+    tracing::info!("Timeout error occurred (expected)");
 
     // Recovery: Page should still work for valid navigation
     let recovery_result = page
@@ -176,7 +182,7 @@ async fn test_error_recovery_network_timeout() {
         recovery_result
     );
 
-    println!("✓ Page recovered after timeout");
+    tracing::info!("✓ Page recovered after timeout");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -188,7 +194,8 @@ async fn test_error_recovery_network_timeout() {
 
 #[tokio::test]
 async fn test_error_recovery_invalid_url() {
-    println!("\n=== Testing Error Recovery: Invalid URL ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Invalid URL ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -205,7 +212,8 @@ async fn test_error_recovery_invalid_url() {
     let result = page.goto("not-a-valid-url", None).await;
 
     assert!(result.is_err(), "Expected invalid URL error");
-    println!("Invalid URL error occurred (expected)");
+    assert!(result.is_err(), "Expected invalid URL error");
+    tracing::info!("Invalid URL error occurred (expected)");
 
     // Recovery: Page should still work for valid navigation
     let recovery_result = page
@@ -218,7 +226,7 @@ async fn test_error_recovery_invalid_url() {
         recovery_result
     );
 
-    println!("✓ Page recovered after invalid URL");
+    tracing::info!("✓ Page recovered after invalid URL");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -230,7 +238,8 @@ async fn test_error_recovery_invalid_url() {
 
 #[tokio::test]
 async fn test_error_recovery_multiple_errors() {
-    println!("\n=== Testing Error Recovery: Multiple Errors ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Multiple Errors ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -255,7 +264,8 @@ async fn test_error_recovery_multiple_errors() {
         let result = page.goto(url, Some(options)).await;
 
         assert!(result.is_err(), "Error {} should fail", i + 1);
-        println!("Error {} handled (expected)", i + 1);
+        assert!(result.is_err(), "Error {} should fail", i + 1);
+        tracing::info!("Error {} handled (expected)", i + 1);
     }
 
     // Recovery: Page should still work after multiple errors
@@ -269,7 +279,7 @@ async fn test_error_recovery_multiple_errors() {
         recovery_result
     );
 
-    println!("✓ Page recovered after multiple consecutive errors");
+    tracing::info!("✓ Page recovered after multiple consecutive errors");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -281,7 +291,8 @@ async fn test_error_recovery_multiple_errors() {
 
 #[tokio::test]
 async fn test_error_recovery_page_creation() {
-    println!("\n=== Testing Error Recovery: Page Creation ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Page Creation ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -305,7 +316,7 @@ async fn test_error_recovery_page_creation() {
     let _ = page2.goto("about:blank", None).await;
     assert!(!page2.url().is_empty(), "Page 2 should have a URL");
 
-    println!("✓ Browser recovered and created new page after error");
+    tracing::info!("✓ Browser recovered and created new page after error");
 
     browser.close().await.expect("Failed to close browser");
 }
@@ -316,7 +327,8 @@ async fn test_error_recovery_page_creation() {
 
 #[tokio::test]
 async fn test_error_recovery_context() {
-    println!("\n=== Testing Error Recovery: Context ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Context ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -350,7 +362,7 @@ async fn test_error_recovery_context() {
     // Verify the page is usable by checking we can get its URL
     assert!(!page2.url().is_empty(), "Page 2 should have a URL");
 
-    println!("✓ Context recovered after page error");
+    tracing::info!("✓ Context recovered after page error");
 
     context.close().await.expect("Failed to close context");
     browser.close().await.expect("Failed to close browser");
@@ -362,7 +374,8 @@ async fn test_error_recovery_context() {
 
 #[tokio::test]
 async fn test_error_recovery_browser_relaunch() {
-    println!("\n=== Testing Error Recovery: Browser Relaunch ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Error Recovery: Browser Relaunch ===\n");
 
     let playwright = Playwright::launch()
         .await
@@ -376,7 +389,7 @@ async fn test_error_recovery_browser_relaunch() {
         .expect("Failed to launch browser 1");
 
     browser1.close().await.expect("Failed to close browser 1");
-    println!("Browser 1 closed");
+    tracing::info!("Browser 1 closed");
 
     // Should be able to launch new browser
     let browser2 = playwright
@@ -394,7 +407,7 @@ async fn test_error_recovery_browser_relaunch() {
     // Verify the page is usable by checking we can get its URL
     assert!(!page.url().is_empty(), "Page should have a URL");
 
-    println!("✓ Browser relaunched successfully");
+    tracing::info!("✓ Browser relaunched successfully");
 
     browser2.close().await.expect("Failed to close browser 2");
 }
@@ -405,7 +418,8 @@ async fn test_error_recovery_browser_relaunch() {
 
 #[tokio::test]
 async fn test_error_recovery_stress() {
-    println!("\n=== Stress Test: Error Recovery Under Load ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Stress Test: Error Recovery Under Load ===\n");
 
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
@@ -440,21 +454,22 @@ async fn test_error_recovery_stress() {
             if result.is_ok() {
                 successful_navigations += 1;
             } else {
-                println!("Navigation failed in cycle {}: {:?}", i, result.err());
+                tracing::warn!("Navigation failed in cycle {}: {:?}", i, result.err());
             }
         }
 
         if i % 5 == 4 {
-            println!("Completed {} error/success cycles", i + 1);
+            tracing::info!("Completed {} error/success cycles", i + 1);
         }
     }
 
     // Verify at least 30% of valid attempts succeeded (allow some flakiness)
     // We attempt CYCLES/2 valid navigations.
     let attempts = CYCLES / 2;
-    println!(
+    tracing::info!(
         "Successful navigations: {}/{}",
-        successful_navigations, attempts
+        successful_navigations,
+        attempts
     );
 
     // We expect most to succeed with the small delay, but CI can be slow.
@@ -467,7 +482,7 @@ async fn test_error_recovery_stress() {
         min_successful
     );
 
-    println!("✓ Error recovery stress test passed");
+    tracing::info!("✓ Error recovery stress test passed");
 
     browser.close().await.expect("Failed to close browser");
     server.shutdown();
@@ -480,7 +495,8 @@ async fn test_error_recovery_stress() {
 #[tokio::test]
 #[cfg(unix)]
 async fn test_signal_handling_cleanup() {
-    println!("\n=== Testing Signal Handling: Cleanup ===\n");
+    common::init_tracing();
+    tracing::info!("\n=== Testing Signal Handling: Cleanup ===\n");
 
     // Note: We can't actually send SIGINT/SIGTERM to our own process in tests,
     // but we can verify that Drop handlers work correctly, which is what
@@ -504,7 +520,7 @@ async fn test_signal_handling_cleanup() {
     // Wait for cleanup
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    println!("✓ Cleanup handlers work for signal simulation");
+    tracing::info!("✓ Cleanup handlers work for signal simulation");
 
     // Note: Real signal handling would require tokio::signal
     // and is better tested in integration/manual testing

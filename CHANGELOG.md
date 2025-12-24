@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Page::pause()` method for manual debugging (Issue #5)
+  - Opens Playwright Inspector and pauses script execution
+  - Delegates to new `BrowserContext::pause()` method
+
+### Fixed
+
+- Protocol serialization for methods with no arguments (fixed `ProtocolError` on `pause`)
+- **Consistent Test Logging** - Refactored all integration tests to explicitly initialize tracing, ensuring protocol errors are captured and visible (Issue #4)
+
 ## [0.7.1] - 2025-12-24
 
 ### Added

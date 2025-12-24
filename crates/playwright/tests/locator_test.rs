@@ -18,12 +18,15 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 // ============================================================================
 // Locator Query Methods
 // ============================================================================
 
 #[tokio::test]
 async fn test_locator_query_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -72,6 +75,7 @@ async fn test_locator_query_methods() {
 
 #[tokio::test]
 async fn test_locator_chaining_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -136,6 +140,7 @@ async fn test_locator_chaining_methods() {
 
 #[tokio::test]
 async fn test_locator_state_methods() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -177,6 +182,7 @@ async fn test_locator_state_methods() {
 
 #[tokio::test]
 async fn test_cross_browser_smoke() {
+    common::init_tracing();
     // Smoke test to verify locators work in Firefox and WebKit
     // (Rust bindings use the same protocol layer for all browsers,
     //  so we don't need exhaustive cross-browser testing for each method)

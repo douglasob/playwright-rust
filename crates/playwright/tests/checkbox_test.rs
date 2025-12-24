@@ -15,8 +15,11 @@ mod test_server;
 use playwright_rs::protocol::Playwright;
 use test_server::TestServer;
 
+mod common;
+
 #[tokio::test]
 async fn test_check_unchecked_checkbox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -55,6 +58,7 @@ async fn test_check_unchecked_checkbox() {
 
 #[tokio::test]
 async fn test_check_is_idempotent() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -92,6 +96,7 @@ async fn test_check_is_idempotent() {
 
 #[tokio::test]
 async fn test_uncheck_checked_checkbox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -129,6 +134,7 @@ async fn test_uncheck_checked_checkbox() {
 
 #[tokio::test]
 async fn test_uncheck_is_idempotent() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -166,6 +172,7 @@ async fn test_uncheck_is_idempotent() {
 
 #[tokio::test]
 async fn test_check_radio_button() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -201,6 +208,7 @@ async fn test_check_radio_button() {
 
 #[tokio::test]
 async fn test_hover() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -245,6 +253,7 @@ async fn test_hover() {
 
 #[tokio::test]
 async fn test_check_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -275,6 +284,7 @@ async fn test_check_firefox() {
 
 #[tokio::test]
 async fn test_hover_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

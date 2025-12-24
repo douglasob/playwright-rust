@@ -8,6 +8,7 @@
 // - Works with checkboxes and radio buttons
 // - Cross-browser compatibility
 
+mod common;
 mod test_server;
 
 use playwright_rs::protocol::Playwright;
@@ -15,6 +16,7 @@ use test_server::TestServer;
 
 #[tokio::test]
 async fn test_set_checked_true_on_checkbox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -56,6 +58,7 @@ async fn test_set_checked_true_on_checkbox() {
 
 #[tokio::test]
 async fn test_set_checked_false_on_checkbox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -98,6 +101,7 @@ async fn test_set_checked_false_on_checkbox() {
 
 #[tokio::test]
 async fn test_set_checked_idempotent() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -148,6 +152,7 @@ async fn test_set_checked_idempotent() {
 
 #[tokio::test]
 async fn test_set_checked_on_radio_button() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -202,6 +207,7 @@ async fn test_set_checked_on_radio_button() {
 
 #[tokio::test]
 async fn test_set_checked_with_options() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -242,6 +248,7 @@ async fn test_set_checked_with_options() {
 
 #[tokio::test]
 async fn test_set_checked_firefox() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await
@@ -280,6 +287,7 @@ async fn test_set_checked_firefox() {
 
 #[tokio::test]
 async fn test_set_checked_webkit() {
+    common::init_tracing();
     let server = TestServer::start().await;
     let playwright = Playwright::launch()
         .await

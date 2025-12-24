@@ -4,8 +4,11 @@
 
 use playwright_rs::protocol::Playwright;
 
+mod common;
+
 #[tokio::test]
 async fn test_new_context() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -20,7 +23,7 @@ async fn test_new_context() {
         .expect("Failed to create context");
 
     // Verify context was created
-    println!("✓ Context created");
+    tracing::info!("✓ Context created");
 
     // Cleanup
     context.close().await.expect("Failed to close context");
@@ -29,6 +32,7 @@ async fn test_new_context() {
 
 #[tokio::test]
 async fn test_multiple_contexts() {
+    common::init_tracing();
     let playwright = Playwright::launch()
         .await
         .expect("Failed to launch Playwright");
@@ -49,7 +53,7 @@ async fn test_multiple_contexts() {
         .await
         .expect("Failed to create context 2");
 
-    println!("✓ Created 2 contexts");
+    tracing::info!("✓ Created 2 contexts");
 
     // Cleanup
     context1.close().await.expect("Failed to close context 1");
